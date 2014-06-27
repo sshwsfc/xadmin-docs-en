@@ -1,0 +1,186 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Xadmin Quickstart Guide &mdash; Django Xadmin 2.1.5 beta documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.1.5 beta',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Django Xadmin 2.1.5 beta documentation" href="index.html" />
+    <link rel="next" title="Customization of xadmin" href="customization.html" />
+    <link rel="prev" title="Welcome to Django Xadmin’s Documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="customization.html" title="Customization of xadmin"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Django Xadmin’s Documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Django Xadmin 2.1.5 beta documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="xadmin">
+<span id="quickstart"></span><h1>Xadmin Quickstart Guide<a class="headerlink" href="#xadmin" title="Permalink to this headline">¶</a></h1>
+<p>For using Xadmin, <a class="reference external" href="http://www.djangoproject.com">Django 1.4</a> needs to be installed and an <a class="reference external" href="http://docs.djangoproject.com/en/dev/ref/contrib/admin/">Admin Site</a> has to be activated.</p>
+<div class="section" id="id1">
+<h2>Installation<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>Using <tt class="docutils literal"><span class="pre">pip</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre>pip install django-xadmin
+</pre></div>
+</div>
+<p><strong>Installing from source</strong></p>
+<p>Download the latest source tarball from <a class="reference external" href="https://github.com/sshwsfc/django-xadmin">https://github.com/sshwsfc/django-xadmin</a> or <tt class="docutils literal"><span class="pre">git</span> <span class="pre">clone</span></tt> the repository. Then execute the following in the project directory:</p>
+<div class="highlight-python"><div class="highlight"><pre>pip install -r requirements.txt
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Before running you can choose to edit the file <tt class="docutils literal"><span class="pre">requirements.txt</span></tt>. Note that <tt class="docutils literal"><span class="pre">xlwt</span></tt> is not required; you can delete this entry if you do not need to export Excel workbooks.</p>
+</div>
+</div>
+<div class="section" id="demo">
+<h2>Running the demo<a class="headerlink" href="#demo" title="Permalink to this headline">¶</a></h2>
+<p>If you have downloaded the source tarball of Xadmin, you will be able to locate a <tt class="docutils literal"><span class="pre">demo_app</span></tt> directory in the project hierarchy. The commands below can be issued to quickly create a demo instance of Xadmin:</p>
+<div class="highlight-python"><div class="highlight"><pre>cd demo_app
+python manage.py runserver
+</pre></div>
+</div>
+<p>Point your browser to <tt class="docutils literal"><span class="pre">http://127.0.0.1:8000</span></tt> to see the results.</p>
+</div>
+<div class="section" id="id2">
+<h2>Working with existing projects<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>Being a Django application, Xadmin can be easily plugged into Django-powered sites.</p>
+<p>First, edit your <tt class="docutils literal"><span class="pre">settings.py</span></tt> to add Xadmin to your <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt>. (Note that the vanilla Django admin app&#8217;s dependencies also have to be installed, but Django admin itself need not):</p>
+<div class="highlight-python"><div class="highlight"><pre>INSTALLED_APPS = (
+    ...
+
+    &#39;xadmin&#39;,
+    &#39;crispy_forms&#39;,
+    &#39;reversion&#39;,
+
+    ...
+)
+</pre></div>
+</div>
+<p>Then add URL patterns and do <tt class="docutils literal"><span class="pre">autodiscover</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># -*- coding: utf-8 -*-</span>
+<span class="kn">import</span> <span class="nn">xadmin</span>
+<span class="n">xadmin</span><span class="o">.</span><span class="n">autodiscover</span><span class="p">()</span>
+
+<span class="c"># version模块自动注册需要版本控制的 Model</span>
+<span class="kn">from</span> <span class="nn">xadmin.plugins</span> <span class="kn">import</span> <span class="n">xversion</span>
+<span class="n">xversion</span><span class="o">.</span><span class="n">registe_models</span><span class="p">()</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="n">url</span><span class="p">(</span><span class="s">r&#39;xadmin/&#39;</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="n">xadmin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">urls</span><span class="p">)),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Collect media:</p>
+<div class="highlight-python"><div class="highlight"><pre>python manage.py collectstatic
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Xadmin Quickstart Guide</a><ul>
+<li><a class="reference internal" href="#id1">Installation</a></li>
+<li><a class="reference internal" href="#demo">Running the demo</a></li>
+<li><a class="reference internal" href="#id2">Working with existing projects</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to Django Xadmin&#8217;s Documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="customization.html"
+                        title="next chapter">Customization of xadmin</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/quickstart.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="customization.html" title="Customization of xadmin"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to Django Xadmin’s Documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">Django Xadmin 2.1.5 beta documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, sshwsfc.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

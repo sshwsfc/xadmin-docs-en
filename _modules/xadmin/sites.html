@@ -1,0 +1,589 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>xadmin.sites &mdash; Django Xadmin 2.1.5 beta documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2.1.5 beta',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Django Xadmin 2.1.5 beta documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Django Xadmin 2.1.5 beta documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for xadmin.sites</h1><div class="highlight"><pre>
+<span class="c"># coding=utf-8</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">update_wrapper</span>
+<span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ImproperlyConfigured</span>
+<span class="kn">from</span> <span class="nn">django.db.models.base</span> <span class="kn">import</span> <span class="n">ModelBase</span>
+<span class="kn">from</span> <span class="nn">django.views.decorators.cache</span> <span class="kn">import</span> <span class="n">never_cache</span>
+
+<span class="c">#设置系统的编码为utf-8</span>
+<span class="nb">reload</span><span class="p">(</span><span class="n">sys</span><span class="p">)</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">setdefaultencoding</span><span class="p">(</span><span class="s">&quot;utf-8&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="AlreadyRegistered"><a class="viewcode-back" href="../../site_api.html#xadmin.sites.AlreadyRegistered">[docs]</a><span class="k">class</span> <span class="nc">AlreadyRegistered</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    如果一个 model 已经在 :class:`AdminSite` 注册过，当尝试再次注册时会抛出这个异常。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="NotRegistered"><a class="viewcode-back" href="../../site_api.html#xadmin.sites.NotRegistered">[docs]</a><span class="k">class</span> <span class="nc">NotRegistered</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    当一个model并未在 :class:`AdminSite` 注册，当调用 :meth:`AdminSite.unregister` 想要取消该model的注册就会抛出该异常。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="MergeAdminMetaclass"><a class="viewcode-back" href="../../site_api.html#xadmin.sites.MergeAdminMetaclass">[docs]</a><span class="k">class</span> <span class="nc">MergeAdminMetaclass</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    用来生成 admin view class 的原类。</span>
+
+<span class="sd">    目前该原类没有做什么特殊的工作。接下来的版本该原类可能会给 admin view class 注入一些公共的属性。</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="o">.</span><span class="n">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="AdminSite"><a class="viewcode-back" href="../../site_api.html#xadmin.sites.AdminSite">[docs]</a><span class="k">class</span> <span class="nc">AdminSite</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    xadmin最核心的类，管理整个xadmin站点的所有注册内容。</span>
+
+<span class="sd">    一般一个管理站点只有一个 ``AdminSite`` 实例，该实例主要完成以下工作:</span>
+
+<span class="sd">        * 注册管理所有 xadmin 需要的信息</span>
+<span class="sd">        * 创建 ``admin view class``</span>
+<span class="sd">        * 注册 django urls</span>
+
+<span class="sd">    其中，xadmin 需要的信息包括以下信息：</span>
+
+<span class="sd">        * 需要 xadmin 管理的 models，以及各 model 的 admin 信息</span>
+<span class="sd">        * 注册的 ``admin view class``</span>
+<span class="sd">        * 注册的 ``model admin view class``</span>
+<span class="sd">        * 注册的各种插件</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;xadmin&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">app_name</span> <span class="o">=</span> <span class="s">&#39;xadmin&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c"># model_class class -&gt; admin_class class</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_registry_avs</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c"># admin_view_class class -&gt; admin_class class</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_registry_settings</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c"># settings name -&gt; admin_class class</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_registry_views</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c">#: 保存所有 Model Base Admin View Class</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_registry_modelviews</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c">#: 保存所有系统插件信息， </span>
+        <span class="c">#    *key*   : 插件绑定的 Admin View 类 </span>
+        <span class="c">#    *value* : 插件 类</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_registry_plugins</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c">#: 创建好的 admin view 会被缓存起来，同样的， </span>
+        <span class="c">#    *key*   : 需要创建的 Admin View 的 class name</span>
+        <span class="c">#    *value* : 已经缓存的 Admin View 类</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_admin_view_cache</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_dependencies</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_admins_order</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="AdminSite.copy_registry"><a class="viewcode-back" href="../../site_api.html#xadmin.sites.AdminSite.copy_registry">[docs]</a>    <span class="k">def</span> <span class="nf">copy_registry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        复制当前 AdminSite 实例的信息</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">copy</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s">&#39;models&#39;</span><span class="p">:</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="p">),</span>
+            <span class="s">&#39;avs&#39;</span><span class="p">:</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_registry_avs</span><span class="p">),</span>
+            <span class="s">&#39;views&#39;</span><span class="p">:</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_registry_views</span><span class="p">),</span>
+            <span class="s">&#39;settings&#39;</span><span class="p">:</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_registry_settings</span><span class="p">),</span>
+            <span class="s">&#39;modelviews&#39;</span><span class="p">:</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_registry_modelviews</span><span class="p">),</span>
+            <span class="s">&#39;plugins&#39;</span><span class="p">:</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_registry_plugins</span><span class="p">),</span>
+        <span class="p">}</span>
+</div>
+<div class="viewcode-block" id="AdminSite.restore_registry"><a class="viewcode-back" href="../../site_api.html#xadmin.sites.AdminSite.restore_registry">[docs]</a>    <span class="k">def</span> <span class="nf">restore_registry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        恢复当前 AdminSite 实例的信息</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&#39;models&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_registry_avs</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&#39;avs&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_registry_views</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&#39;views&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_registry_settings</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&#39;settings&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_registry_modelviews</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&#39;modelviews&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_registry_plugins</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&#39;plugins&#39;</span><span class="p">]</span>
+</div>
+<div class="viewcode-block" id="AdminSite.register_modelview"><a class="viewcode-back" href="../../site_api.html#xadmin.sites.AdminSite.register_modelview">[docs]</a>    <span class="k">def</span> <span class="nf">register_modelview</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">admin_view_class</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        将 Model Base Admin View 类注册到 AdminSite，</span>
+
+<span class="sd">        :param path: view对应的url路径</span>
+<span class="sd">        :param admin_view_class: 注册的 Model Base Admin View 类</span>
+<span class="sd">        :param name: view对应的url name, 要包含两个%%s, 分别会替换为 app_label和module_name</span>
+
+<span class="sd">        注册 Model Base Admin View 可以为每一个在xadmin注册的 Model 生成一个 Admin View，并且包含相关的 Model 信息。</span>
+<span class="sd">        具体内容可以参看 :class:`~xadmin.views.base.ModelAdminView`。 举例::</span>
+
+<span class="sd">            from xadmin.views import ModelAdminView</span>
+
+<span class="sd">            class TestModelAdminView(ModelAdminView):</span>
+<span class="sd">                </span>
+<span class="sd">                def get(self, request, obj_id):</span>
+<span class="sd">                    pass</span>
+
+<span class="sd">            site.register_modelview(r&#39;^(.+)/test/$&#39;, TestModelAdminView, name=&#39;%s_%s_test&#39;)</span>
+
+<span class="sd">        注册后，用户可以通过访问 ``/%(app_label)s/%(module_name)s/123/test`` 访问到该view</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># 内部引用，避免循环引用</span>
+        <span class="kn">from</span> <span class="nn">xadmin.views.base</span> <span class="kn">import</span> <span class="n">BaseAdminView</span>
+        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">admin_view_class</span><span class="p">,</span> <span class="n">BaseAdminView</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_registry_modelviews</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">path</span><span class="p">,</span> <span class="n">admin_view_class</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="s">u&#39;The registered view class </span><span class="si">%s</span><span class="s"> isn</span><span class="se">\&#39;</span><span class="s">t subclass of </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span>
+                                      <span class="p">(</span><span class="n">admin_view_class</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">BaseAdminView</span><span class="o">.</span><span class="n">__name__</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="AdminSite.register_view"><a class="viewcode-back" href="../../site_api.html#xadmin.sites.AdminSite.register_view">[docs]</a>    <span class="k">def</span> <span class="nf">register_view</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">admin_view_class</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        将 Admin View 类注册到 AdminSite，一般用于创建独立的 admin 页面，例如登陆，介绍页面，帮助页面等。</span>
+
+<span class="sd">        :param path: view对应的url路径</span>
+<span class="sd">        :param admin_view_class: 注册的 Admin View 类</span>
+<span class="sd">        :param name: view对应的url name</span>
+
+<span class="sd">        关于 Admin View 具体内容可以参看 :class:`~xadmin.views.base.BaseAdminView`。 举例::</span>
+
+<span class="sd">            from xadmin.views import BaseAdminView</span>
+
+<span class="sd">            class TestAdminView(BaseAdminView):</span>
+<span class="sd">                </span>
+<span class="sd">                def get(self, request):</span>
+<span class="sd">                    pass</span>
+
+<span class="sd">            site.register_view(r&#39;test_view/$&#39;, TestModelAdminView, name=&#39;for_test&#39;)</span>
+
+<span class="sd">        注册后，用户可以通过访问 ``/test_view/`` 访问到该view</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_registry_views</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">path</span><span class="p">,</span> <span class="n">admin_view_class</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+</div>
+<div class="viewcode-block" id="AdminSite.register_plugin"><a class="viewcode-back" href="../../site_api.html#xadmin.sites.AdminSite.register_plugin">[docs]</a>    <span class="k">def</span> <span class="nf">register_plugin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugin_class</span><span class="p">,</span> <span class="n">admin_view_class</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        将 Plugin 类注册到 AdminSite，当任何 Admin View 运行时当前 view 绑定的 plugin 会生效。</span>
+
+<span class="sd">        :param plugin_class: view对应的url路径</span>
+<span class="sd">        :param admin_view_class: 该 plugin 绑定的 Admin View 类</span>
+
+<span class="sd">        关于 Admin Plugin 具体内容可以参看 :class:`~xadmin.views.base.BaseAdminPlugin`。 举例::</span>
+
+<span class="sd">            from xadmin.views import BaseAdminPlugin</span>
+
+<span class="sd">            class TestAdminPlugin(BaseAdminPlugin):</span>
+<span class="sd">                </span>
+<span class="sd">                def get_context(self, context):</span>
+<span class="sd">                    context[&#39;test&#39;] = True</span>
+<span class="sd">                    return context</span>
+
+<span class="sd">            site.register_plugin(TestAdminPlugin, SomeAdminView)</span>
+
+<span class="sd">        注册后，只要运行 SomeAdminView 实例的 get_context 方法，就会调用该 plugin。</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">xadmin.views.base</span> <span class="kn">import</span> <span class="n">BaseAdminPlugin</span>
+        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">plugin_class</span><span class="p">,</span> <span class="n">BaseAdminPlugin</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_registry_plugins</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
+                <span class="n">admin_view_class</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">plugin_class</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="s">u&#39;The registered plugin class </span><span class="si">%s</span><span class="s"> isn</span><span class="se">\&#39;</span><span class="s">t subclass of </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span>
+                                      <span class="p">(</span><span class="n">plugin_class</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">BaseAdminPlugin</span><span class="o">.</span><span class="n">__name__</span><span class="p">))</span>
+</div>
+    <span class="k">def</span> <span class="nf">register_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">admin_class</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_registry_settings</span><span class="p">[</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span> <span class="o">=</span> <span class="n">admin_class</span>
+
+<div class="viewcode-block" id="AdminSite.register"><a class="viewcode-back" href="../../site_api.html#xadmin.sites.AdminSite.register">[docs]</a>    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_or_iterable</span><span class="p">,</span> <span class="n">admin_class</span><span class="o">=</span><span class="nb">object</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        注册需要管理的 Model， 或是注册某 AdminView 的 OptionClass</span>
+
+<span class="sd">        :param model_or_iterable: 传入 model 或是指定的 ModelOptionClass</span>
+<span class="sd">        :param admin_class: 当 model_or_iterable 为 Model 时，该参数为 ModelAdmin；model_or_iterable 为 AdminView 时 ，该参数为 OptionClass</span>
+
+<span class="sd">        关于 Admin Plugin 具体内容可以参看 :class:`~xadmin.views.base.BaseAdminPlugin`。 举例::</span>
+
+<span class="sd">            from models import SomeModel</span>
+
+<span class="sd">            class SomeModelAdmin(object):</span>
+<span class="sd">                pass</span>
+
+<span class="sd">            site.register(SomeModel, SomeModelAdmin)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">xadmin.views.base</span> <span class="kn">import</span> <span class="n">BaseAdminView</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_or_iterable</span><span class="p">,</span> <span class="n">ModelBase</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">model_or_iterable</span><span class="p">,</span> <span class="n">BaseAdminView</span><span class="p">):</span>
+            <span class="n">model_or_iterable</span> <span class="o">=</span> <span class="p">[</span><span class="n">model_or_iterable</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">model_or_iterable</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelBase</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">abstract</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="s">&#39;The model </span><span class="si">%s</span><span class="s"> is abstract, so it &#39;</span>
+                                               <span class="s">&#39;cannot be registered with admin.&#39;</span> <span class="o">%</span> <span class="n">model</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">AlreadyRegistered</span><span class="p">(</span>
+                        <span class="s">&#39;The model </span><span class="si">%s</span><span class="s"> is already registered&#39;</span> <span class="o">%</span> <span class="n">model</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
+
+                <span class="c"># If we got **options then dynamically construct a subclass of</span>
+                <span class="c"># admin_class with those **options.</span>
+                <span class="k">if</span> <span class="n">options</span><span class="p">:</span>
+                    <span class="c"># For reasons I don&#39;t quite understand, without a __module__</span>
+                    <span class="c"># the created class appears to &quot;live&quot; in the wrong place,</span>
+                    <span class="c"># which causes issues later on.</span>
+                    <span class="n">options</span><span class="p">[</span><span class="s">&#39;__module__&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">__name__</span>
+
+                <span class="n">admin_class</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s%s</span><span class="s">Admin&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">module_name</span><span class="p">)),</span> <span class="p">(</span><span class="n">admin_class</span><span class="p">,),</span> <span class="n">options</span> <span class="ow">or</span> <span class="p">{})</span>
+                <span class="n">admin_class</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+                <span class="n">admin_class</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_admins_order</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model_admins_order</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="p">[</span><span class="n">model</span><span class="p">]</span> <span class="o">=</span> <span class="n">admin_class</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">model</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry_avs</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">AlreadyRegistered</span><span class="p">(</span><span class="s">&#39;The admin_view_class </span><span class="si">%s</span><span class="s"> is already registered&#39;</span> <span class="o">%</span> <span class="n">model</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">options</span><span class="p">:</span>
+                    <span class="n">options</span><span class="p">[</span><span class="s">&#39;__module__&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">__name__</span>
+                    <span class="n">admin_class</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span>
+                        <span class="s">&quot;</span><span class="si">%s</span><span class="s">Admin&quot;</span> <span class="o">%</span> <span class="n">model</span><span class="o">.</span><span class="n">__name__</span><span class="p">),</span> <span class="p">(</span><span class="n">admin_class</span><span class="p">,),</span> <span class="n">options</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">_registry_avs</span><span class="p">[</span><span class="n">model</span><span class="p">]</span> <span class="o">=</span> <span class="n">admin_class</span>
+</div>
+<div class="viewcode-block" id="AdminSite.unregister"><a class="viewcode-back" href="../../site_api.html#xadmin.sites.AdminSite.unregister">[docs]</a>    <span class="k">def</span> <span class="nf">unregister</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_or_iterable</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        取消 Model 或 OptionClass 的注册</span>
+
+<span class="sd">        如果 Model 或 OptionClass 并未注册过，会抛出 :exc:`xadmin.sites.NotRegistered` 异常</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">xadmin.views.base</span> <span class="kn">import</span> <span class="n">BaseAdminView</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_or_iterable</span><span class="p">,</span> <span class="p">(</span><span class="n">ModelBase</span><span class="p">,</span> <span class="n">BaseAdminView</span><span class="p">)):</span>
+            <span class="n">model_or_iterable</span> <span class="o">=</span> <span class="p">[</span><span class="n">model_or_iterable</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">model_or_iterable</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelBase</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">model</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">NotRegistered</span><span class="p">(</span>
+                        <span class="s">&#39;The model </span><span class="si">%s</span><span class="s"> is not registered&#39;</span> <span class="o">%</span> <span class="n">model</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
+                <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="p">[</span><span class="n">model</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">model</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry_avs</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">NotRegistered</span><span class="p">(</span><span class="s">&#39;The admin_view_class </span><span class="si">%s</span><span class="s"> is not registered&#39;</span> <span class="o">%</span> <span class="n">model</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
+                <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry_avs</span><span class="p">[</span><span class="n">model</span><span class="p">]</span>
+</div>
+    <span class="k">def</span> <span class="nf">set_loginview</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">login_view</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">login_view</span> <span class="o">=</span> <span class="n">login_view</span>
+
+<div class="viewcode-block" id="AdminSite.has_permission"><a class="viewcode-back" href="../../site_api.html#xadmin.sites.AdminSite.has_permission">[docs]</a>    <span class="k">def</span> <span class="nf">has_permission</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        如果返回为 ``True`` 则说明 ``request.user`` 至少能够访问当前xadmin网站。否则无法访问xadmin的任何页面。</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_active</span> <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_staff</span>
+</div>
+<div class="viewcode-block" id="AdminSite.check_dependencies"><a class="viewcode-back" href="../../site_api.html#xadmin.sites.AdminSite.check_dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">check_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        检查运行xadmin需要的包是否已经正确安装</span>
+
+<span class="sd">        默认情况下会检查 *ContentType* 模块是否已经正确安装</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">django.contrib.contenttypes.models</span> <span class="kn">import</span> <span class="n">ContentType</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ContentType</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">installed</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="s">&quot;Put &#39;django.contrib.contenttypes&#39; in &quot;</span>
+                                       <span class="s">&quot;your INSTALLED_APPS setting in order to use the admin application.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="s">&#39;django.contrib.auth.context_processors.auth&#39;</span> <span class="ow">in</span> <span class="n">settings</span><span class="o">.</span><span class="n">TEMPLATE_CONTEXT_PROCESSORS</span> <span class="ow">or</span>
+                <span class="s">&#39;django.core.context_processors.auth&#39;</span> <span class="ow">in</span> <span class="n">settings</span><span class="o">.</span><span class="n">TEMPLATE_CONTEXT_PROCESSORS</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="s">&quot;Put &#39;django.contrib.auth.context_processors.auth&#39; &quot;</span>
+                                       <span class="s">&quot;in your TEMPLATE_CONTEXT_PROCESSORS setting in order to use the admin application.&quot;</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="AdminSite.admin_view"><a class="viewcode-back" href="../../site_api.html#xadmin.sites.AdminSite.admin_view">[docs]</a>    <span class="k">def</span> <span class="nf">admin_view</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">cacheable</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        为当前 ``AdminSite`` 的所有 View 提供的 Decorator。主要是功能是使用 :meth:`AdminSite.has_permission` </span>
+<span class="sd">        方法来判断当前用户是否有权限访问该 ``AdminSite``， 如果没有，转到登陆页面</span>
+
+<span class="sd">        通常情况下会在 :meth:`AdminSite.get_urls` 方法中使用该方法</span>
+
+<span class="sd">        :param cacheable: 默认情况下，所有的 AdminView 会通过 ``never_cache`` 标记成不做缓存，如果确实需要缓存，可以设置 cacheable=True</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">inner</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_permission</span><span class="p">(</span><span class="n">request</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="s">&#39;need_site_permission&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_admin_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">login_view</span><span class="p">)(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">view</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cacheable</span><span class="p">:</span>
+            <span class="n">inner</span> <span class="o">=</span> <span class="n">never_cache</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">update_wrapper</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">view</span><span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">_get_merge_attrs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">option_class</span><span class="p">,</span> <span class="n">plugin_class</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        从 OptionClass 中获取 plugin 需要的属性。目前是获取 OptionClass 中不以 ``_`` 开头的属性，且该属性在 Plugin 中有定义</span>
+
+<span class="sd">        TODO: 处理方式需要考虑优化，目前还是比较山寨</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">([(</span><span class="n">name</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">option_class</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">option_class</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;_&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">option_class</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">plugin_class</span><span class="p">,</span> <span class="n">name</span><span class="p">)])</span>
+
+    <span class="k">def</span> <span class="nf">_get_settings_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">admin_view_class</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">admin_view_class</span><span class="o">.</span><span class="n">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry_settings</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry_settings</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;admin&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">5</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry_settings</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry_settings</span><span class="p">[</span><span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">5</span><span class="p">]]</span>
+        <span class="k">elif</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;adminview&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">9</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry_settings</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry_settings</span><span class="p">[</span><span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">9</span><span class="p">]]</span>
+
+        <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">_create_plugin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">option_classes</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        返回创建插件类的方法，用于创建新的、与 OptionClass 合并过的插件类。</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># 创建新插件类的方法</span>
+        <span class="k">def</span> <span class="nf">merge_class</span><span class="p">(</span><span class="n">plugin_class</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">option_classes</span><span class="p">:</span>
+                <span class="n">attrs</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">plugin_class</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">oc</span> <span class="ow">in</span> <span class="n">option_classes</span><span class="p">:</span>
+                    <span class="c"># 首先根据 OptionClass 获取需要合并的属性 </span>
+                    <span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_merge_attrs</span><span class="p">(</span><span class="n">oc</span><span class="p">,</span> <span class="n">plugin_class</span><span class="p">))</span>
+                    <span class="c"># 其次查看 OptionClass 是否含有与插件类同名的 SubClass，有的话也作为 baseclass 合并。</span>
+                    <span class="n">meta_class</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">oc</span><span class="p">,</span> <span class="n">plugin_class</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">oc</span><span class="p">,</span> <span class="n">plugin_class</span><span class="o">.</span><span class="n">__name__</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;Plugin&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">),</span> <span class="bp">None</span><span class="p">))</span>
+                    <span class="k">if</span> <span class="n">meta_class</span><span class="p">:</span>
+                        <span class="n">bases</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">meta_class</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">attrs</span><span class="p">:</span>
+                    <span class="c"># 合并新的插件类</span>
+                    <span class="n">plugin_class</span> <span class="o">=</span> <span class="n">MergeAdminMetaclass</span><span class="p">(</span>
+                        <span class="s">&#39;</span><span class="si">%s%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">oc</span><span class="o">.</span><span class="n">__name__</span> <span class="k">for</span> <span class="n">oc</span> <span class="ow">in</span> <span class="n">option_classes</span><span class="p">]),</span> <span class="n">plugin_class</span><span class="o">.</span><span class="n">__name__</span><span class="p">),</span>
+                        <span class="nb">tuple</span><span class="p">(</span><span class="n">bases</span><span class="p">),</span> <span class="n">attrs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">plugin_class</span>
+        <span class="k">return</span> <span class="n">merge_class</span>
+
+<div class="viewcode-block" id="AdminSite.get_plugins"><a class="viewcode-back" href="../../site_api.html#xadmin.sites.AdminSite.get_plugins">[docs]</a>    <span class="k">def</span> <span class="nf">get_plugins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">admin_view_class</span><span class="p">,</span> <span class="o">*</span><span class="n">option_classes</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        xadmin中 **核心** 方法，用于获取 AdminViewClass 的 plugins。</span>
+
+<span class="sd">        获取 plugins 首先根据该 AdminViewClass 及其所有的集成类在已经注册的插件中找到相应的插件类。然后再使用第二个参数的 OptionClass 拼成插件类。</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">xadmin.views</span> <span class="kn">import</span> <span class="n">BaseAdminView</span>
+        <span class="n">plugins</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="p">[</span><span class="n">oc</span> <span class="k">for</span> <span class="n">oc</span> <span class="ow">in</span> <span class="n">option_classes</span> <span class="k">if</span> <span class="n">oc</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">klass</span> <span class="ow">in</span> <span class="n">admin_view_class</span><span class="o">.</span><span class="n">mro</span><span class="p">():</span>
+            <span class="c"># 列出 AdminViewClass 所有的集成类</span>
+            <span class="k">if</span> <span class="n">klass</span> <span class="o">==</span> <span class="n">BaseAdminView</span> <span class="ow">or</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">klass</span><span class="p">,</span> <span class="n">BaseAdminView</span><span class="p">):</span>
+                <span class="n">merge_opts</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">reg_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry_avs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">klass</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">reg_class</span><span class="p">:</span>
+                    <span class="n">merge_opts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reg_class</span><span class="p">)</span>
+                <span class="n">settings_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_settings_class</span><span class="p">(</span><span class="n">klass</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">settings_class</span><span class="p">:</span>
+                    <span class="n">merge_opts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">settings_class</span><span class="p">)</span>
+                <span class="n">merge_opts</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">opts</span><span class="p">)</span>
+                <span class="n">ps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry_plugins</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">klass</span><span class="p">,</span> <span class="p">[])</span>
+                <span class="c"># 如果有需要merge的 OptionClass 则使用 AdminSite._create_plugin 方法创建插件类，并且放入插件列表</span>
+                <span class="n">plugins</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_create_plugin</span><span class="p">(</span>
+                    <span class="n">merge_opts</span><span class="p">),</span> <span class="n">ps</span><span class="p">)</span> <span class="k">if</span> <span class="n">merge_opts</span> <span class="k">else</span> <span class="n">ps</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">plugins</span>
+</div>
+<div class="viewcode-block" id="AdminSite.get_view_class"><a class="viewcode-back" href="../../site_api.html#xadmin.sites.AdminSite.get_view_class">[docs]</a>    <span class="k">def</span> <span class="nf">get_view_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view_class</span><span class="p">,</span> <span class="n">option_class</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">opts</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        xadmin中 **最核心** 的方法，用于创建 xadmin 特有的 AdminViewClass。</span>
+
+<span class="sd">        创建 AdminView 和核心思想为动态生成 mix 的类，主要步骤有两步:</span>
+
+<span class="sd">            1. 使用已经注册的 OptionClass (见 :meth:`~register`) 以及参数传入的 option_class 与 view_class 动态生成类</span>
+<span class="sd">            2. 根据 view_class 及其继承类找到相应的 plugins， 作为生成的 AdminViewClass 的 plugins 属性</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">merges</span> <span class="o">=</span> <span class="p">[</span><span class="n">option_class</span><span class="p">]</span> <span class="k">if</span> <span class="n">option_class</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">klass</span> <span class="ow">in</span> <span class="n">view_class</span><span class="o">.</span><span class="n">mro</span><span class="p">():</span>
+            <span class="c"># 找到该 view_class 所有基类在 AdminSite 注册的 OptionClass</span>
+            <span class="n">reg_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry_avs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">klass</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">reg_class</span><span class="p">:</span>
+                <span class="n">merges</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reg_class</span><span class="p">)</span>
+            <span class="n">settings_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_settings_class</span><span class="p">(</span><span class="n">klass</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">settings_class</span><span class="p">:</span>
+                <span class="n">merges</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">settings_class</span><span class="p">)</span>
+            <span class="n">merges</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">klass</span><span class="p">)</span>
+        <span class="n">new_class_name</span> <span class="o">=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">__name__</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">merges</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">new_class_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_admin_view_cache</span><span class="p">:</span>
+            <span class="c"># 如果缓存中没有该类，则创建这个类。首先取得该 view_class 的 plugins</span>
+            <span class="n">plugins</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_plugins</span><span class="p">(</span><span class="n">view_class</span><span class="p">,</span> <span class="n">option_class</span><span class="p">)</span>
+            <span class="c"># 合成新类，同时吧 plugins 及 admin_site 作为类属性传入</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_admin_view_cache</span><span class="p">[</span><span class="n">new_class_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">MergeAdminMetaclass</span><span class="p">(</span>
+                <span class="n">new_class_name</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">merges</span><span class="p">),</span>
+                <span class="nb">dict</span><span class="p">({</span><span class="s">&#39;plugin_classes&#39;</span><span class="p">:</span> <span class="n">plugins</span><span class="p">,</span> <span class="s">&#39;admin_site&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="p">},</span> <span class="o">**</span><span class="n">opts</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_admin_view_cache</span><span class="p">[</span><span class="n">new_class_name</span><span class="p">]</span>
+</div>
+<div class="viewcode-block" id="AdminSite.create_admin_view"><a class="viewcode-back" href="../../site_api.html#xadmin.sites.AdminSite.create_admin_view">[docs]</a>    <span class="k">def</span> <span class="nf">create_admin_view</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">admin_view_class</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        使用 :meth:`~AdminSite.get_view_class` 创建 AdminView 类，并且返回 view 方法，可以用于 get_urls 方法中</span>
+
+<span class="sd">        :param admin_view_class: AdminView 类</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_view_class</span><span class="p">(</span><span class="n">admin_view_class</span><span class="p">)</span><span class="o">.</span><span class="n">as_view</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="AdminSite.create_model_admin_view"><a class="viewcode-back" href="../../site_api.html#xadmin.sites.AdminSite.create_model_admin_view">[docs]</a>    <span class="k">def</span> <span class="nf">create_model_admin_view</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">admin_view_class</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">option_class</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        使用 :meth:`~AdminSite.get_view_class` 创建 ModelAdminView 类，并且返回 view 方法，可以用于 get_urls 方法中</span>
+
+<span class="sd">        :param admin_view_class: AdminView 类，该类应该为 :class:`~xadmin.views.base.ModelAdminView` 的子类</span>
+<span class="sd">        :param model: Model 类，目前该参数暂无作用</span>
+<span class="sd">        :param option_class: Model 的 OptionClass，保存对该 Model 的相关定制</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_view_class</span><span class="p">(</span><span class="n">admin_view_class</span><span class="p">,</span> <span class="n">option_class</span><span class="p">)</span><span class="o">.</span><span class="n">as_view</span><span class="p">()</span>
+</div>
+    <span class="k">def</span> <span class="nf">get_urls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">django.conf.urls</span> <span class="kn">import</span> <span class="n">patterns</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">include</span>
+        <span class="kn">from</span> <span class="nn">xadmin.views.base</span> <span class="kn">import</span> <span class="n">BaseAdminView</span>
+
+        <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">:</span>
+            <span class="c"># 如果是DEBUG模式，检查依赖</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">check_dependencies</span><span class="p">()</span>
+
+        <span class="c">#: 该方法主要用来使用 AdminSite.admin_view 封装 view</span>
+        <span class="k">def</span> <span class="nf">wrap</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">cacheable</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">admin_view</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">cacheable</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">update_wrapper</span><span class="p">(</span><span class="n">wrapper</span><span class="p">,</span> <span class="n">view</span><span class="p">)</span>
+
+        <span class="c"># 添加 i18n_javascript view， 用于js的国际化</span>
+        <span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+                               <span class="n">url</span><span class="p">(</span><span class="s">r&#39;^jsi18n/$&#39;</span><span class="p">,</span> <span class="n">wrap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">i18n_javascript</span><span class="p">,</span>
+                                                      <span class="n">cacheable</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;jsi18n&#39;</span><span class="p">)</span>
+                               <span class="p">)</span>
+
+        <span class="c"># 添加注册的 AdminViewClass</span>
+        <span class="n">urlpatterns</span> <span class="o">+=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+                                <span class="o">*</span><span class="p">[</span><span class="n">url</span><span class="p">(</span>
+                                  <span class="n">path</span><span class="p">,</span> <span class="n">wrap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">create_admin_view</span><span class="p">(</span><span class="n">clz_or_func</span><span class="p">))</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">clz_or_func</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">clz_or_func</span><span class="p">,</span> <span class="n">BaseAdminView</span><span class="p">)</span> <span class="k">else</span> <span class="n">include</span><span class="p">(</span><span class="n">clz_or_func</span><span class="p">(</span><span class="bp">self</span><span class="p">)),</span>
+                                  <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">clz_or_func</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry_views</span><span class="p">]</span>
+                                <span class="p">)</span>
+
+        <span class="c"># 添加 ModelAdminViewClass</span>
+        <span class="k">for</span> <span class="n">model</span><span class="p">,</span> <span class="n">admin_class</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="c"># 需要将所有已经注册的 Model 逐一注册 ModelAdminViewClass</span>
+            <span class="n">view_urls</span> <span class="o">=</span> <span class="p">[</span><span class="n">url</span><span class="p">(</span>
+                <span class="n">path</span><span class="p">,</span> <span class="n">wrap</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">create_model_admin_view</span><span class="p">(</span><span class="n">clz</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">admin_class</span><span class="p">)),</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="o">%</span> <span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">module_name</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">clz</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_registry_modelviews</span><span class="p">]</span>
+            <span class="n">urlpatterns</span> <span class="o">+=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+                                    <span class="n">url</span><span class="p">(</span>
+                                    <span class="s">r&#39;^</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">/&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                                        <span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">module_name</span><span class="p">),</span>
+                                    <span class="n">include</span><span class="p">(</span><span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">view_urls</span><span class="p">)))</span>
+                                    <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">urlpatterns</span>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="AdminSite.urls"><a class="viewcode-back" href="../../site_api.html#xadmin.sites.AdminSite.urls">[docs]</a>    <span class="k">def</span> <span class="nf">urls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        返回 xadmin site 的urls，用于设置django的urls。该方法用于属性使用。在您的Django的 ``urls.py`` 中，使用示例如下::</span>
+
+<span class="sd">            from django.conf.urls import patterns, include, url</span>
+
+<span class="sd">            import xadmin</span>
+<span class="sd">            xadmin.autodiscover()</span>
+
+<span class="sd">            urlpatterns = patterns(&#39;&#39;,</span>
+<span class="sd">                url(r&#39;&#39;, include(xadmin.site.urls)),</span>
+<span class="sd">            )</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_urls</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_name</span>
+</div>
+    <span class="k">def</span> <span class="nf">i18n_javascript</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">USE_I18N</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">django.views.i18n</span> <span class="kn">import</span> <span class="n">javascript_catalog</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">django.views.i18n</span> <span class="kn">import</span> <span class="n">null_javascript_catalog</span> <span class="k">as</span> <span class="n">javascript_catalog</span>
+        <span class="k">return</span> <span class="n">javascript_catalog</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">packages</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;django.conf&#39;</span><span class="p">,</span> <span class="s">&#39;xadmin&#39;</span><span class="p">])</span>
+
+<span class="c"># :class:`AdminSite` 的单例，通常情况下可以直接使用这个 site，作为全站统一实例</span></div>
+<span class="n">site</span> <span class="o">=</span> <span class="n">AdminSite</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">Django Xadmin 2.1.5 beta documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, sshwsfc.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>xadmin.plugins.chart &mdash; Django Xadmin 2.1.5 beta documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2.1.5 beta',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="Django Xadmin 2.1.5 beta documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Django Xadmin 2.1.5 beta documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for xadmin.plugins.chart</h1><div class="highlight"><pre>
+<span class="c"># coding=utf-8</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">图表插件</span>
+<span class="sd">=========</span>
+
+<span class="sd">功能</span>
+<span class="sd">----</span>
+
+<span class="sd">在数据列表页面, 跟列表数据生成图表. 可以指定多个数据列, 生成多个图表.</span>
+
+<span class="sd">截图</span>
+<span class="sd">----</span>
+
+<span class="sd">.. image:: /images/plugins/chart.png</span>
+
+<span class="sd">使用</span>
+<span class="sd">----</span>
+
+<span class="sd">在 Model OptionClass 中设定 ``data_charts`` 属性, 该属性为 dict 类型, key 是图表的标示名称, value 是图表的具体设置属性. 使用示例::</span>
+
+<span class="sd">    class RecordAdmin(object):</span>
+<span class="sd">        data_charts = {</span>
+<span class="sd">            &quot;user_count&quot;: {&#39;title&#39;: u&quot;User Report&quot;, &quot;x-field&quot;: &quot;date&quot;, &quot;y-field&quot;: (&quot;user_count&quot;, &quot;view_count&quot;), &quot;order&quot;: (&#39;date&#39;,)},</span>
+<span class="sd">            &quot;avg_count&quot;: {&#39;title&#39;: u&quot;Avg Report&quot;, &quot;x-field&quot;: &quot;date&quot;, &quot;y-field&quot;: (&#39;avg_count&#39;,), &quot;order&quot;: (&#39;date&#39;,)}</span>
+<span class="sd">        }</span>
+
+<span class="sd">图表的主要属性为:</span>
+
+<span class="sd">    ``title`` : 图表的显示名称</span>
+
+<span class="sd">    ``x-field`` : 图表的 X 轴数据列, 一般是日期, 时间等</span>
+
+<span class="sd">    ``y-field`` : 图表的 Y 轴数据列, 该项是一个 list, 可以同时设定多个列, 这样多个列的数据会在同一个图表中显示</span>
+
+<span class="sd">    ``order`` : 排序信息, 如果不写则使用数据列表的排序</span>
+
+<span class="sd">版本</span>
+<span class="sd">----</span>
+
+<span class="sd">暂无</span>
+
+<span class="sd">API</span>
+<span class="sd">---</span>
+<span class="sd">.. autoclass:: ChartsPlugin</span>
+<span class="sd">.. autoclass:: ChartsView</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">decimal</span>
+<span class="kn">import</span> <span class="nn">calendar</span>
+
+<span class="kn">from</span> <span class="nn">django.template</span> <span class="kn">import</span> <span class="n">loader</span>
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponseNotFound</span>
+<span class="kn">from</span> <span class="nn">django.core.serializers.json</span> <span class="kn">import</span> <span class="n">DjangoJSONEncoder</span>
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+<span class="kn">from</span> <span class="nn">django.utils.encoding</span> <span class="kn">import</span> <span class="n">smart_unicode</span>
+<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">django.utils.http</span> <span class="kn">import</span> <span class="n">urlencode</span>
+<span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">ugettext_lazy</span> <span class="k">as</span> <span class="n">_</span><span class="p">,</span> <span class="n">ugettext</span>
+
+<span class="kn">from</span> <span class="nn">xadmin.sites</span> <span class="kn">import</span> <span class="n">site</span>
+<span class="kn">from</span> <span class="nn">xadmin.views</span> <span class="kn">import</span> <span class="n">BaseAdminPlugin</span><span class="p">,</span> <span class="n">ListAdminView</span>
+<span class="kn">from</span> <span class="nn">xadmin.views.dashboard</span> <span class="kn">import</span> <span class="n">ModelBaseWidget</span><span class="p">,</span> <span class="n">widget_manager</span>
+<span class="kn">from</span> <span class="nn">xadmin.util</span> <span class="kn">import</span> <span class="n">lookup_field</span><span class="p">,</span> <span class="n">label_for_field</span><span class="p">,</span> <span class="n">force_unicode</span><span class="p">,</span> <span class="n">json</span>
+
+
+<span class="nd">@widget_manager.register</span>
+<span class="k">class</span> <span class="nc">ChartWidget</span><span class="p">(</span><span class="n">ModelBaseWidget</span><span class="p">):</span>
+    <span class="n">widget_type</span> <span class="o">=</span> <span class="s">&#39;chart&#39;</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="n">_</span><span class="p">(</span><span class="s">&#39;Show models simple chart.&#39;</span><span class="p">)</span>
+    <span class="n">template</span> <span class="o">=</span> <span class="s">&#39;xadmin/widgets/chart.html&#39;</span>
+    <span class="n">widget_icon</span> <span class="o">=</span> <span class="s">&#39;fa fa-bar-chart-o&#39;</span>
+
+    <span class="k">def</span> <span class="nf">convert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">list_params</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;params&#39;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chart</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;chart&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ChartWidget</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">charts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">one_chart</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">model_admin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">admin_site</span><span class="o">.</span><span class="n">_registry</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">]</span>
+        <span class="n">chart</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">chart</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model_admin</span><span class="p">,</span> <span class="s">&#39;data_charts&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">chart</span> <span class="ow">and</span> <span class="n">chart</span> <span class="ow">in</span> <span class="n">model_admin</span><span class="o">.</span><span class="n">data_charts</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">charts</span> <span class="o">=</span> <span class="p">{</span><span class="n">chart</span><span class="p">:</span> <span class="n">model_admin</span><span class="o">.</span><span class="n">data_charts</span><span class="p">[</span><span class="n">chart</span><span class="p">]}</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">one_chart</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">model_admin</span><span class="o">.</span><span class="n">data_charts</span><span class="p">[</span><span class="n">chart</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;title&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">charts</span> <span class="o">=</span> <span class="n">model_admin</span><span class="o">.</span><span class="n">data_charts</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="n">ugettext</span><span class="p">(</span>
+                        <span class="s">&quot;</span><span class="si">%s</span><span class="s"> Charts&quot;</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">verbose_name_plural</span>
+
+    <span class="k">def</span> <span class="nf">filte_choices_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">modeladmin</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">modeladmin</span><span class="p">,</span> <span class="s">&#39;data_charts&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">))</span> <span class="ow">and</span> \
+            <span class="nb">super</span><span class="p">(</span><span class="n">ChartWidget</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">filte_choices_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">modeladmin</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_chart_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_admin_url</span><span class="p">(</span><span class="s">&#39;chart&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;?&quot;</span> <span class="o">+</span> <span class="n">urlencode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">list_params</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+            <span class="s">&#39;charts&#39;</span><span class="p">:</span> <span class="p">[{</span><span class="s">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s">&quot;title&quot;</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="s">&#39;title&#39;</span><span class="p">],</span> <span class="s">&#39;url&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_chart_url</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">v</span><span class="p">)}</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">charts</span><span class="o">.</span><span class="n">items</span><span class="p">()],</span>
+        <span class="p">})</span>
+
+    <span class="c"># Media</span>
+    <span class="k">def</span> <span class="nf">media</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">vendor</span><span class="p">(</span><span class="s">&#39;flot.js&#39;</span><span class="p">,</span> <span class="s">&#39;xadmin.plugin.charts.js&#39;</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">JSONEncoder</span><span class="p">(</span><span class="n">DjangoJSONEncoder</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="n">calendar</span><span class="o">.</span><span class="n">timegm</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">timetuple</span><span class="p">())</span> <span class="o">*</span> <span class="mi">1000</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">decimal</span><span class="o">.</span><span class="n">Decimal</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">JSONEncoder</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">smart_unicode</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ChartsPlugin"><a class="viewcode-back" href="../../../plugins.html#xadmin.plugins.chart.ChartsPlugin">[docs]</a><span class="k">class</span> <span class="nc">ChartsPlugin</span><span class="p">(</span><span class="n">BaseAdminPlugin</span><span class="p">):</span>
+
+    <span class="n">data_charts</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">init_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_charts</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_chart_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">admin_view</span><span class="o">.</span><span class="n">model_admin_url</span><span class="p">(</span><span class="s">&#39;chart&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">admin_view</span><span class="o">.</span><span class="n">get_query_string</span><span class="p">()</span>
+
+    <span class="c"># Media</span>
+    <span class="k">def</span> <span class="nf">get_media</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">media</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">media</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">vendor</span><span class="p">(</span><span class="s">&#39;flot.js&#39;</span><span class="p">,</span> <span class="s">&#39;xadmin.plugin.charts.js&#39;</span><span class="p">)</span>
+
+    <span class="c"># Block Views</span>
+    <span class="k">def</span> <span class="nf">block_results_top</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">nodes</span><span class="p">):</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+            <span class="s">&#39;charts&#39;</span><span class="p">:</span> <span class="p">[{</span><span class="s">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s">&quot;title&quot;</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="s">&#39;title&#39;</span><span class="p">],</span> <span class="s">&#39;url&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_chart_url</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">v</span><span class="p">)}</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_charts</span><span class="o">.</span><span class="n">items</span><span class="p">()],</span>
+        <span class="p">})</span>
+        <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loader</span><span class="o">.</span><span class="n">render_to_string</span><span class="p">(</span><span class="s">&#39;xadmin/blocks/model_list.results_top.charts.html&#39;</span><span class="p">,</span> <span class="n">context_instance</span><span class="o">=</span><span class="n">context</span><span class="p">))</span>
+
+</div>
+<div class="viewcode-block" id="ChartsView"><a class="viewcode-back" href="../../../plugins.html#xadmin.plugins.chart.ChartsView">[docs]</a><span class="k">class</span> <span class="nc">ChartsView</span><span class="p">(</span><span class="n">ListAdminView</span><span class="p">):</span>
+
+    <span class="n">data_charts</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">get_ordering</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s">&#39;order&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">chart</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">chart</span><span class="p">[</span><span class="s">&#39;order&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">ChartsView</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get_ordering</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_charts</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">HttpResponseNotFound</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">chart</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_charts</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_field</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">chart</span><span class="p">[</span><span class="s">&#39;x-field&#39;</span><span class="p">]</span>
+        <span class="n">y_fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">chart</span><span class="p">[</span><span class="s">&#39;y-field&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_fields</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">y_fields</span><span class="p">,)</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">y_fields</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="n">y_fields</span>
+
+        <span class="n">datas</span> <span class="o">=</span> <span class="p">[{</span><span class="s">&quot;data&quot;</span><span class="p">:[],</span> <span class="s">&quot;label&quot;</span><span class="p">:</span> <span class="n">force_unicode</span><span class="p">(</span><span class="n">label_for_field</span><span class="p">(</span>
+            <span class="n">i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">model_admin</span><span class="o">=</span><span class="bp">self</span><span class="p">))}</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_fields</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">make_result_list</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">result_list</span><span class="p">:</span>
+            <span class="n">xf</span><span class="p">,</span> <span class="n">attrs</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">lookup_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_field</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">yfname</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_fields</span><span class="p">):</span>
+                <span class="n">yf</span><span class="p">,</span> <span class="n">yattrs</span><span class="p">,</span> <span class="n">yv</span> <span class="o">=</span> <span class="n">lookup_field</span><span class="p">(</span><span class="n">yfname</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+                <span class="n">datas</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">&quot;data&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">value</span><span class="p">,</span> <span class="n">yv</span><span class="p">))</span>
+
+        <span class="n">option</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;series&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;lines&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;show&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">},</span> <span class="s">&#39;points&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;show&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">}},</span>
+                  <span class="s">&#39;grid&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;hoverable&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span> <span class="s">&#39;clickable&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">}}</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">xfield</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">get_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_field</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">xfield</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">TimeField</span><span class="p">):</span>
+                <span class="n">option</span><span class="p">[</span><span class="s">&#39;xaxis&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;mode&#39;</span><span class="p">:</span> <span class="s">&quot;time&quot;</span><span class="p">,</span> <span class="s">&#39;tickLength&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">}</span>
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">xfield</span><span class="p">)</span> <span class="ow">is</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">:</span>
+                    <span class="n">option</span><span class="p">[</span><span class="s">&#39;xaxis&#39;</span><span class="p">][</span><span class="s">&#39;timeformat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;%y/%m/</span><span class="si">%d</span><span class="s">&quot;</span>
+                <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">xfield</span><span class="p">)</span> <span class="ow">is</span> <span class="n">models</span><span class="o">.</span><span class="n">TimeField</span><span class="p">:</span>
+                    <span class="n">option</span><span class="p">[</span><span class="s">&#39;xaxis&#39;</span><span class="p">][</span><span class="s">&#39;timeformat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;%H:%M:%S&quot;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">option</span><span class="p">[</span><span class="s">&#39;xaxis&#39;</span><span class="p">][</span><span class="s">&#39;timeformat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;%y/%m/</span><span class="si">%d</span><span class="s"> %H:%M:%S&quot;</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="n">option</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chart</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;option&#39;</span><span class="p">,</span> <span class="p">{}))</span>
+
+        <span class="n">content</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;data&#39;</span><span class="p">:</span> <span class="n">datas</span><span class="p">,</span> <span class="s">&#39;option&#39;</span><span class="p">:</span> <span class="n">option</span><span class="p">}</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">cls</span><span class="o">=</span><span class="n">JSONEncoder</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+</div>
+<span class="n">site</span><span class="o">.</span><span class="n">register_plugin</span><span class="p">(</span><span class="n">ChartsPlugin</span><span class="p">,</span> <span class="n">ListAdminView</span><span class="p">)</span>
+<span class="n">site</span><span class="o">.</span><span class="n">register_modelview</span><span class="p">(</span><span class="s">r&#39;^chart/(.+)/$&#39;</span><span class="p">,</span> <span class="n">ChartsView</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">_chart&#39;</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Django Xadmin 2.1.5 beta documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, sshwsfc.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

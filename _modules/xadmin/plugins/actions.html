@@ -1,0 +1,432 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>xadmin.plugins.actions &mdash; Django Xadmin 2.1.5 beta documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2.1.5 beta',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="Django Xadmin 2.1.5 beta documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Django Xadmin 2.1.5 beta documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for xadmin.plugins.actions</h1><div class="highlight"><pre>
+<span class="c"># coding=utf-8</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Action</span>
+<span class="sd">======</span>
+
+<span class="sd">功能</span>
+<span class="sd">----</span>
+
+<span class="sd">Action 插件在数据列表页面提供了数据选择功能, 选择后的数据可以经过 Action 做特殊的处理. 默认提供的 Action 为批量删除功能.</span>
+
+<span class="sd">截图</span>
+<span class="sd">----</span>
+
+<span class="sd">.. image:: /images/plugins/action.png</span>
+
+<span class="sd">使用</span>
+<span class="sd">----</span>
+
+<span class="sd">开发者可以设置 Model OptionClass 的 actions 属性, 该属性是一个列表, 包含您想启用的 Action 的类. 系统已经默认内置了删除数据的 Action,</span>
+<span class="sd">当然您可以自己制作 Action 来实现特定的功能, 制作 Action 的实例如下.</span>
+
+<span class="sd">    * 首先要创建一个 Action 类, 该类需要继承 BaseActionView. BaseActionView 是 :class:`~xadmin.views.ModelAdminView` 的子类::</span>
+<span class="sd">    </span>
+<span class="sd">        from xadmin.plugins.actions import BaseActionView</span>
+
+<span class="sd">        class MyAction(BaseActionView):</span>
+
+<span class="sd">            # 这里需要填写三个属性</span>
+<span class="sd">            action_name = &quot;my_action&quot;    #: 相当于这个 Action 的唯一标示, 尽量用比较针对性的名字</span>
+<span class="sd">            description = _(u&#39;Test selected %(verbose_name_plural)s&#39;) #: 描述, 出现在 Action 菜单中, 可以使用 ``%(verbose_name_plural)s`` 代替 Model 的名字.</span>
+
+<span class="sd">            model_perm = &#39;change&#39;    #: 该 Action 所需权限</span>
+
+<span class="sd">            # 而后实现 do_action 方法</span>
+<span class="sd">            def do_action(self, queryset):</span>
+<span class="sd">                # queryset 是包含了已经选择的数据的 queryset</span>
+<span class="sd">                for obj in queryset:</span>
+<span class="sd">                    # obj 的操作</span>
+<span class="sd">                    ...</span>
+<span class="sd">                # 返回 HttpResponse</span>
+<span class="sd">                return HttpResponse(...)</span>
+
+<span class="sd">    * 然后在 Model 的 OptionClass 中使用这个 Action::</span>
+
+<span class="sd">        class MyModelAdmin(object):</span>
+
+<span class="sd">            actions = [MyAction, ]</span>
+
+<span class="sd">    * 这样就完成了自己的 Action</span>
+
+<span class="sd">API</span>
+<span class="sd">---</span>
+<span class="sd">.. autoclass:: ActionPlugin</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+<span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">PermissionDenied</span>
+<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">router</span>
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span><span class="p">,</span> <span class="n">HttpResponseRedirect</span>
+<span class="kn">from</span> <span class="nn">django.template</span> <span class="kn">import</span> <span class="n">loader</span>
+<span class="kn">from</span> <span class="nn">django.template.response</span> <span class="kn">import</span> <span class="n">TemplateResponse</span>
+<span class="kn">from</span> <span class="nn">django.utils.datastructures</span> <span class="kn">import</span> <span class="n">SortedDict</span>
+<span class="kn">from</span> <span class="nn">django.utils.encoding</span> <span class="kn">import</span> <span class="n">force_unicode</span>
+<span class="kn">from</span> <span class="nn">django.utils.safestring</span> <span class="kn">import</span> <span class="n">mark_safe</span>
+<span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">ugettext</span> <span class="k">as</span> <span class="n">_</span><span class="p">,</span> <span class="n">ungettext</span>
+<span class="kn">from</span> <span class="nn">django.utils.text</span> <span class="kn">import</span> <span class="n">capfirst</span>
+<span class="kn">from</span> <span class="nn">xadmin.sites</span> <span class="kn">import</span> <span class="n">site</span>
+<span class="kn">from</span> <span class="nn">xadmin.util</span> <span class="kn">import</span> <span class="n">model_format_dict</span><span class="p">,</span> <span class="n">get_deleted_objects</span><span class="p">,</span> <span class="n">model_ngettext</span>
+<span class="kn">from</span> <span class="nn">xadmin.views</span> <span class="kn">import</span> <span class="n">BaseAdminPlugin</span><span class="p">,</span> <span class="n">ListAdminView</span>
+<span class="kn">from</span> <span class="nn">xadmin.views.base</span> <span class="kn">import</span> <span class="n">filter_hook</span><span class="p">,</span> <span class="n">ModelAdminView</span>
+
+
+<span class="n">ACTION_CHECKBOX_NAME</span> <span class="o">=</span> <span class="s">&#39;_selected_action&#39;</span>
+<span class="n">checkbox</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CheckboxInput</span><span class="p">({</span><span class="s">&#39;class&#39;</span><span class="p">:</span> <span class="s">&#39;action-select&#39;</span><span class="p">},</span> <span class="k">lambda</span> <span class="n">value</span><span class="p">:</span> <span class="bp">False</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">action_checkbox</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">checkbox</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">ACTION_CHECKBOX_NAME</span><span class="p">,</span> <span class="n">force_unicode</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">pk</span><span class="p">))</span>
+<span class="n">action_checkbox</span><span class="o">.</span><span class="n">short_description</span> <span class="o">=</span> <span class="n">mark_safe</span><span class="p">(</span>
+    <span class="s">&#39;&lt;input type=&quot;checkbox&quot; id=&quot;action-toggle&quot; /&gt;&#39;</span><span class="p">)</span>
+<span class="n">action_checkbox</span><span class="o">.</span><span class="n">allow_tags</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="n">action_checkbox</span><span class="o">.</span><span class="n">allow_export</span> <span class="o">=</span> <span class="bp">False</span>
+<span class="n">action_checkbox</span><span class="o">.</span><span class="n">is_column</span> <span class="o">=</span> <span class="bp">False</span>
+
+
+<span class="k">class</span> <span class="nc">BaseActionView</span><span class="p">(</span><span class="n">ModelAdminView</span><span class="p">):</span>
+    <span class="n">action_name</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">icon</span> <span class="o">=</span> <span class="s">&#39;fa fa-tasks&#39;</span>
+
+    <span class="n">model_perm</span> <span class="o">=</span> <span class="s">&#39;change&#39;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">has_perm</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">list_view</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">list_view</span><span class="o">.</span><span class="n">get_model_perms</span><span class="p">()[</span><span class="n">cls</span><span class="o">.</span><span class="n">model_perm</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">init_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_view</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">list_view</span> <span class="o">=</span> <span class="n">list_view</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">admin_site</span> <span class="o">=</span> <span class="n">list_view</span><span class="o">.</span><span class="n">admin_site</span>
+
+    <span class="nd">@filter_hook</span>
+    <span class="k">def</span> <span class="nf">do_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">queryset</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">DeleteSelectedAction</span><span class="p">(</span><span class="n">BaseActionView</span><span class="p">):</span>
+
+    <span class="n">action_name</span> <span class="o">=</span> <span class="s">&quot;delete_selected&quot;</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="n">_</span><span class="p">(</span><span class="s">u&#39;Delete selected </span><span class="si">%(verbose_name_plural)s</span><span class="s">&#39;</span><span class="p">)</span>
+
+    <span class="n">delete_confirmation_template</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">delete_selected_confirmation_template</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="n">model_perm</span> <span class="o">=</span> <span class="s">&#39;delete&#39;</span>
+    <span class="n">icon</span> <span class="o">=</span> <span class="s">&#39;fa fa-times&#39;</span>
+
+    <span class="nd">@filter_hook</span>
+    <span class="k">def</span> <span class="nf">delete_models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">queryset</span><span class="p">):</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">n</span><span class="p">:</span>
+            <span class="n">queryset</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">message_user</span><span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="s">&quot;Successfully deleted </span><span class="si">%(count)d</span><span class="s"> </span><span class="si">%(items)s</span><span class="s">.&quot;</span><span class="p">)</span> <span class="o">%</span> <span class="p">{</span>
+                <span class="s">&quot;count&quot;</span><span class="p">:</span> <span class="n">n</span><span class="p">,</span> <span class="s">&quot;items&quot;</span><span class="p">:</span> <span class="n">model_ngettext</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+            <span class="p">},</span> <span class="s">&#39;success&#39;</span><span class="p">)</span>
+
+    <span class="nd">@filter_hook</span>
+    <span class="k">def</span> <span class="nf">do_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">queryset</span><span class="p">):</span>
+        <span class="c"># Check that the user has delete permission for the actual model</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_delete_permission</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">PermissionDenied</span>
+
+        <span class="n">using</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">db_for_write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+
+        <span class="c"># Populate deletable_objects, a data structure of all related objects that</span>
+        <span class="c"># will also be deleted.</span>
+        <span class="n">deletable_objects</span><span class="p">,</span> <span class="n">perms_needed</span><span class="p">,</span> <span class="n">protected</span> <span class="o">=</span> <span class="n">get_deleted_objects</span><span class="p">(</span>
+            <span class="n">queryset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">admin_site</span><span class="p">,</span> <span class="n">using</span><span class="p">)</span>
+
+        <span class="c"># The user has already confirmed the deletion.</span>
+        <span class="c"># Do the deletion and return a None to display the change list view again.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;post&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">perms_needed</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">PermissionDenied</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">delete_models</span><span class="p">(</span><span class="n">queryset</span><span class="p">)</span>
+            <span class="c"># Return None to display the change list page again.</span>
+            <span class="k">return</span> <span class="bp">None</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">queryset</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">objects_name</span> <span class="o">=</span> <span class="n">force_unicode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">verbose_name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">objects_name</span> <span class="o">=</span> <span class="n">force_unicode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">verbose_name_plural</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">perms_needed</span> <span class="ow">or</span> <span class="n">protected</span><span class="p">:</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="n">_</span><span class="p">(</span><span class="s">&quot;Cannot delete </span><span class="si">%(name)s</span><span class="s">&quot;</span><span class="p">)</span> <span class="o">%</span> <span class="p">{</span><span class="s">&quot;name&quot;</span><span class="p">:</span> <span class="n">objects_name</span><span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="n">_</span><span class="p">(</span><span class="s">&quot;Are you sure?&quot;</span><span class="p">)</span>
+
+        <span class="n">context</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_context</span><span class="p">()</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+            <span class="s">&quot;title&quot;</span><span class="p">:</span> <span class="n">title</span><span class="p">,</span>
+            <span class="s">&quot;objects_name&quot;</span><span class="p">:</span> <span class="n">objects_name</span><span class="p">,</span>
+            <span class="s">&quot;deletable_objects&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">deletable_objects</span><span class="p">],</span>
+            <span class="s">&#39;queryset&#39;</span><span class="p">:</span> <span class="n">queryset</span><span class="p">,</span>
+            <span class="s">&quot;perms_lacking&quot;</span><span class="p">:</span> <span class="n">perms_needed</span><span class="p">,</span>
+            <span class="s">&quot;protected&quot;</span><span class="p">:</span> <span class="n">protected</span><span class="p">,</span>
+            <span class="s">&quot;opts&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="p">,</span>
+            <span class="s">&quot;app_label&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span>
+            <span class="s">&#39;action_checkbox_name&#39;</span><span class="p">:</span> <span class="n">ACTION_CHECKBOX_NAME</span><span class="p">,</span>
+        <span class="p">})</span>
+
+        <span class="c"># Display the confirmation page</span>
+        <span class="k">return</span> <span class="n">TemplateResponse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">delete_selected_confirmation_template</span> <span class="ow">or</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">get_template_list</span><span class="p">(</span><span class="s">&#39;views/model_delete_selected_confirm.html&#39;</span><span class="p">),</span> <span class="n">context</span><span class="p">,</span> <span class="n">current_app</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">admin_site</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ActionPlugin"><a class="viewcode-back" href="../../../plugins.html#xadmin.plugins.actions.ActionPlugin">[docs]</a><span class="k">class</span> <span class="nc">ActionPlugin</span><span class="p">(</span><span class="n">BaseAdminPlugin</span><span class="p">):</span>
+
+    <span class="c"># Actions</span>
+    <span class="n">actions</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">actions_selection_counter</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="n">global_actions</span> <span class="o">=</span> <span class="p">[</span><span class="n">DeleteSelectedAction</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">init_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">actions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_actions</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_list_display</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_display</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">:</span>
+            <span class="n">list_display</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">&#39;action_checkbox&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">admin_view</span><span class="o">.</span><span class="n">action_checkbox</span> <span class="o">=</span> <span class="n">action_checkbox</span>
+        <span class="k">return</span> <span class="n">list_display</span>
+
+    <span class="k">def</span> <span class="nf">get_list_display_links</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_display_links</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">list_display_links</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">list_display_links</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;action_checkbox&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">admin_view</span><span class="o">.</span><span class="n">list_display</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">list_display_links</span>
+
+    <span class="k">def</span> <span class="nf">get_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">admin_view</span><span class="o">.</span><span class="n">result_count</span><span class="p">:</span>
+            <span class="n">av</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">admin_view</span>
+            <span class="n">selection_note_all</span> <span class="o">=</span> <span class="n">ungettext</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%(total_count)s</span><span class="s"> selected&#39;</span><span class="p">,</span>
+                                           <span class="s">&#39;All </span><span class="si">%(total_count)s</span><span class="s"> selected&#39;</span><span class="p">,</span> <span class="n">av</span><span class="o">.</span><span class="n">result_count</span><span class="p">)</span>
+
+            <span class="n">new_context</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s">&#39;selection_note&#39;</span><span class="p">:</span> <span class="n">_</span><span class="p">(</span><span class="s">&#39;0 of </span><span class="si">%(cnt)s</span><span class="s"> selected&#39;</span><span class="p">)</span> <span class="o">%</span> <span class="p">{</span><span class="s">&#39;cnt&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">av</span><span class="o">.</span><span class="n">result_list</span><span class="p">)},</span>
+                <span class="s">&#39;selection_note_all&#39;</span><span class="p">:</span> <span class="n">selection_note_all</span> <span class="o">%</span> <span class="p">{</span><span class="s">&#39;total_count&#39;</span><span class="p">:</span> <span class="n">av</span><span class="o">.</span><span class="n">result_count</span><span class="p">},</span>
+                <span class="s">&#39;action_choices&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_action_choices</span><span class="p">(),</span>
+                <span class="s">&#39;actions_selection_counter&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions_selection_counter</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="n">context</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">new_context</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">context</span>
+
+    <span class="k">def</span> <span class="nf">post_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">request</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">admin_view</span><span class="o">.</span><span class="n">request</span>
+        <span class="n">av</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">admin_view</span>
+
+        <span class="c"># Actions with no confirmation</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span> <span class="ow">and</span> <span class="s">&#39;action&#39;</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">:</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">[</span><span class="s">&#39;action&#39;</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">action</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="n">_</span><span class="p">(</span><span class="s">&quot;Items must be selected in order to perform &quot;</span>
+                        <span class="s">&quot;actions on them. No items have been changed.&quot;</span><span class="p">)</span>
+                <span class="n">av</span><span class="o">.</span><span class="n">message_user</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ac</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">icon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">[</span><span class="n">action</span><span class="p">]</span>
+                <span class="n">select_across</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;select_across&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span> <span class="o">==</span> <span class="s">&#39;1&#39;</span>
+                <span class="n">selected</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">getlist</span><span class="p">(</span><span class="n">ACTION_CHECKBOX_NAME</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">selected</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">select_across</span><span class="p">:</span>
+                    <span class="c"># Reminder that something needs to be selected or nothing will happen</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="n">_</span><span class="p">(</span><span class="s">&quot;Items must be selected in order to perform &quot;</span>
+                            <span class="s">&quot;actions on them. No items have been changed.&quot;</span><span class="p">)</span>
+                    <span class="n">av</span><span class="o">.</span><span class="n">message_user</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">queryset</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">list_queryset</span><span class="o">.</span><span class="n">_clone</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">select_across</span><span class="p">:</span>
+                        <span class="c"># Perform the action only on the selected objects</span>
+                        <span class="n">queryset</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">list_queryset</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk__in</span><span class="o">=</span><span class="n">selected</span><span class="p">)</span>
+                    <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_action</span><span class="p">(</span><span class="n">ac</span><span class="p">,</span> <span class="n">queryset</span><span class="p">)</span>
+                    <span class="c"># Actions may return an HttpResponse, which will be used as the</span>
+                    <span class="c"># response from the POST. If not, we&#39;ll be a good little HTTP</span>
+                    <span class="c"># citizen and redirect back to the changelist page.</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">HttpResponse</span><span class="p">):</span>
+                        <span class="k">return</span> <span class="n">response</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">HttpResponseRedirect</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">get_full_path</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="k">def</span> <span class="nf">response_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ac</span><span class="p">,</span> <span class="n">queryset</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ac</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">ac</span><span class="p">,</span> <span class="n">BaseActionView</span><span class="p">):</span>
+            <span class="n">action_view</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_model_view</span><span class="p">(</span><span class="n">ac</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">admin_view</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+            <span class="n">action_view</span><span class="o">.</span><span class="n">init_action</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">admin_view</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">action_view</span><span class="o">.</span><span class="n">do_action</span><span class="p">(</span><span class="n">queryset</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ac</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">admin_view</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="p">,</span> <span class="n">queryset</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_actions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">SortedDict</span><span class="p">()</span>
+
+        <span class="n">actions</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_action</span><span class="p">(</span><span class="n">action</span><span class="p">)</span> <span class="k">for</span> <span class="n">action</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_actions</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">klass</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">admin_view</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">mro</span><span class="p">()[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">class_actions</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">klass</span><span class="p">,</span> <span class="s">&#39;actions&#39;</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">class_actions</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">actions</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_action</span><span class="p">(</span><span class="n">action</span><span class="p">)</span> <span class="k">for</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">class_actions</span><span class="p">])</span>
+
+        <span class="c"># get_action might have returned None, so filter any of those out.</span>
+        <span class="n">actions</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">actions</span><span class="p">)</span>
+
+        <span class="c"># Convert the actions into a SortedDict keyed by name.</span>
+        <span class="n">actions</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">([</span>
+            <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">ac</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">desc</span><span class="p">,</span> <span class="n">icon</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">ac</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">desc</span><span class="p">,</span> <span class="n">icon</span> <span class="ow">in</span> <span class="n">actions</span>
+        <span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">actions</span>
+
+    <span class="k">def</span> <span class="nf">get_action_choices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a list of choices for use in a form object.  Each choice is a</span>
+<span class="sd">        tuple (name, description).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">choices</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ac</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">icon</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="o">.</span><span class="n">itervalues</span><span class="p">():</span>
+            <span class="n">choice</span> <span class="o">=</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">description</span> <span class="o">%</span> <span class="n">model_format_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="p">),</span> <span class="n">icon</span><span class="p">)</span>
+            <span class="n">choices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">choice</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">choices</span>
+
+    <span class="k">def</span> <span class="nf">get_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="n">BaseActionView</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">action</span><span class="o">.</span><span class="n">has_perm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">admin_view</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">None</span>
+            <span class="k">return</span> <span class="n">action</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="s">&#39;action_name&#39;</span><span class="p">),</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="s">&#39;description&#39;</span><span class="p">),</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="s">&#39;icon&#39;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="nb">callable</span><span class="p">(</span><span class="n">action</span><span class="p">):</span>
+            <span class="n">func</span> <span class="o">=</span> <span class="n">action</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="n">action</span><span class="o">.</span><span class="n">__name__</span>
+
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">admin_view</span><span class="o">.</span><span class="n">__class__</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+            <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">admin_view</span><span class="o">.</span><span class="n">__class__</span><span class="p">,</span> <span class="n">action</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="s">&#39;short_description&#39;</span><span class="p">):</span>
+            <span class="n">description</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="n">short_description</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">description</span> <span class="o">=</span> <span class="n">capfirst</span><span class="p">(</span><span class="n">action</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">,</span> <span class="s">&#39; &#39;</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">func</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="s">&#39;icon&#39;</span><span class="p">,</span> <span class="s">&#39;tasks&#39;</span><span class="p">)</span>
+
+    <span class="c"># View Methods</span>
+    <span class="k">def</span> <span class="nf">result_header</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">attr</span> <span class="ow">and</span> <span class="n">field_name</span> <span class="o">==</span> <span class="s">&#39;action_checkbox&#39;</span><span class="p">:</span>
+            <span class="n">item</span><span class="o">.</span><span class="n">classes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;action-checkbox-column&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">item</span>
+
+    <span class="k">def</span> <span class="nf">result_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">field</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">field_name</span> <span class="o">==</span> <span class="s">u&#39;action_checkbox&#39;</span><span class="p">:</span>
+            <span class="n">item</span><span class="o">.</span><span class="n">classes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;action-checkbox&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">item</span>
+
+    <span class="c"># Media</span>
+    <span class="k">def</span> <span class="nf">get_media</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">media</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">admin_view</span><span class="o">.</span><span class="n">result_count</span><span class="p">:</span>
+            <span class="n">media</span> <span class="o">=</span> <span class="n">media</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">vendor</span><span class="p">(</span><span class="s">&#39;xadmin.plugin.actions.js&#39;</span><span class="p">,</span> <span class="s">&#39;xadmin.plugins.css&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">media</span>
+
+    <span class="c"># Block Views</span>
+    <span class="k">def</span> <span class="nf">block_results_bottom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">nodes</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">admin_view</span><span class="o">.</span><span class="n">result_count</span><span class="p">:</span>
+            <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loader</span><span class="o">.</span><span class="n">render_to_string</span><span class="p">(</span><span class="s">&#39;xadmin/blocks/model_list.results_bottom.actions.html&#39;</span><span class="p">,</span> <span class="n">context_instance</span><span class="o">=</span><span class="n">context</span><span class="p">))</span>
+
+</div>
+<span class="n">site</span><span class="o">.</span><span class="n">register_plugin</span><span class="p">(</span><span class="n">ActionPlugin</span><span class="p">,</span> <span class="n">ListAdminView</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">Django Xadmin 2.1.5 beta documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, sshwsfc.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

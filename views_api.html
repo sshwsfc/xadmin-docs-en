@@ -1,0 +1,1599 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Views &mdash; Django Xadmin 2.1.5 beta documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.1.5 beta',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Django Xadmin 2.1.5 beta documentation" href="index.html" />
+    <link rel="next" title="FAQ" href="faq.html" />
+    <link rel="prev" title="Admin Site" href="site_api.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="faq.html" title="FAQ"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="site_api.html" title="Admin Site"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Django Xadmin 2.1.5 beta documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-xadmin.views">
+<span id="views"></span><h1>Views<a class="headerlink" href="#module-xadmin.views" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="xadmin.views.BaseAdminObject">
+<em class="property">class </em><tt class="descclassname">xadmin.views.</tt><tt class="descname">BaseAdminObject</tt><a class="headerlink" href="#xadmin.views.BaseAdminObject" title="Permalink to this definition">¶</a></dt>
+<dd><p>The base parent class of <a class="reference internal" href="#xadmin.views.BaseAdminView" title="xadmin.views.BaseAdminView"><tt class="xref py py-class docutils literal"><span class="pre">BaseAdminView</span></tt></a> and <a class="reference internal" href="#xadmin.views.BaseAdminPlugin" title="xadmin.views.BaseAdminPlugin"><tt class="xref py py-class docutils literal"><span class="pre">BaseAdminPlugin</span></tt></a> , support some comm method.</p>
+<dl class="method">
+<dt id="xadmin.views.BaseAdminObject.get_admin_url">
+<tt class="descname">get_admin_url</tt><big>(</big><em>name</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.BaseAdminObject.get_admin_url" title="Permalink to this definition">¶</a></dt>
+<dd><p>a shortcut method to get the url by the name parameter, the url namespace of AdminSite.app_name  will be appended</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.BaseAdminObject.get_form_params">
+<tt class="descname">get_form_params</tt><big>(</big><em>new_params=None</em>, <em>remove=None</em><big>)</big><a class="headerlink" href="#xadmin.views.BaseAdminObject.get_form_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>add or delete a parameter to/from the current request, and generate the hidden input. This method is used to render the parameter with the form</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>new_params</strong> &#8211; 要新加的参数，该参数为 dict</li>
+<li><strong>remove</strong> &#8211; 要删除的参数，该参数为 list, tuple</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.BaseAdminObject.get_model_perm">
+<tt class="descname">get_model_perm</tt><big>(</big><em>model</em>, <em>name</em><big>)</big><a class="headerlink" href="#xadmin.views.BaseAdminObject.get_model_perm" title="Permalink to this definition">¶</a></dt>
+<dd><p>this method is used to get the permission of a specified Model, see the following example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">view</span><span class="o">.</span><span class="n">get_model_perm</span><span class="p">(</span><span class="n">User</span><span class="p">,</span> <span class="s">&#39;view&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="s">&#39;auth.user_view&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.BaseAdminObject.get_model_url">
+<tt class="descname">get_model_url</tt><big>(</big><em>model</em>, <em>name</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.BaseAdminObject.get_model_url" title="Permalink to this definition">¶</a></dt>
+<dd><p>a shortcut method, used to get the url by given model and name parameter, the urlname will be generated automatically and with the namespace of AdminSite.app_name.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.BaseAdminObject.get_model_view">
+<tt class="descname">get_model_view</tt><big>(</big><em>view_class</em>, <em>model</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.BaseAdminObject.get_model_view" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the instance of MOdelAdminViewClass. First get the corresponding model OptionClass through AdminSite, then call get_view method.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>view_class</strong> &#8211; ModelAdminViewClass 的类</li>
+<li><strong>model</strong> &#8211; 绑定的 Model 类</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.BaseAdminObject.get_query_string">
+<tt class="descname">get_query_string</tt><big>(</big><em>new_params=None</em>, <em>remove=None</em><big>)</big><a class="headerlink" href="#xadmin.views.BaseAdminObject.get_query_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>generate new query string basing on the original</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>new_params</strong> &#8211; 要新加的参数，该参数为 dict</li>
+<li><strong>remove</strong> &#8211; 要删除的参数，该参数为 list, tuple</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.BaseAdminObject.get_view">
+<tt class="descname">get_view</tt><big>(</big><em>view_class</em>, <em>option_class=None</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.BaseAdminObject.get_view" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the instance of AdminViewClass. In fact it works by calling xadmin.sites.AdminSite.get_view_class method.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>view_class</strong> &#8211; AdminViewClass 的类</li>
+<li><strong>option_class</strong> &#8211; 希望与 AdminViewClass 合并的 OptionClass</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.BaseAdminObject.has_model_perm">
+<tt class="descname">has_model_perm</tt><big>(</big><em>model</em>, <em>name</em>, <em>user=None</em><big>)</big><a class="headerlink" href="#xadmin.views.BaseAdminObject.has_model_perm" title="Permalink to this definition">¶</a></dt>
+<dd><p>check whether the current user has a certain permission of some Model, for example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">view</span><span class="o">.</span><span class="n">has_model_perm</span><span class="p">(</span><span class="n">User</span><span class="p">,</span> <span class="s">&#39;view&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="bp">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.BaseAdminObject.message_user">
+<tt class="descname">message_user</tt><big>(</big><em>message</em>, <em>level='info'</em><big>)</big><a class="headerlink" href="#xadmin.views.BaseAdminObject.message_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a message to the user. The default implementation
+posts a message using the django.contrib.messages backend.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.BaseAdminObject.render_response">
+<tt class="descname">render_response</tt><big>(</big><em>content</em>, <em>response_type='json'</em><big>)</big><a class="headerlink" href="#xadmin.views.BaseAdminObject.render_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>it is a shortcut method to create an instance of HttpResponse. If the response_type is set as &#8216;json&#8217;, the result will be convert to json format and then output.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.BaseAdminObject.static">
+<tt class="descname">static</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#xadmin.views.BaseAdminObject.static" title="Permalink to this definition">¶</a></dt>
+<dd><p>the shortcut method of xadmin.util.static, used to return the url of the static file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.BaseAdminObject.template_response">
+<tt class="descname">template_response</tt><big>(</big><em>template</em>, <em>context</em><big>)</big><a class="headerlink" href="#xadmin.views.BaseAdminObject.template_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>a shortcut of creating TemplateResponse instance</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="xadmin.views.BaseAdminPlugin">
+<em class="property">class </em><tt class="descclassname">xadmin.views.</tt><tt class="descname">BaseAdminPlugin</tt><big>(</big><em>admin_view</em><big>)</big><a class="headerlink" href="#xadmin.views.BaseAdminPlugin" title="Permalink to this definition">¶</a></dt>
+<dd><p>It is the base class of all Plugin classes, inherited from BaseAdminObject class. Please see xadmin.sites.AdminSite.register_plugin method to check the Plugin registration and usage. Refer to the method  fliter_hook about the Plugin principle.</p>
+<dl class="function">
+<dt id="xadmin.views.base.BaseAdminPlugin.filter_hook">
+<tt class="descname">filter_hook</tt><big>(</big><em>func</em><big>)</big><a class="headerlink" href="#xadmin.views.base.BaseAdminPlugin.filter_hook" title="Permalink to this definition">¶</a></dt>
+<dd><p>the methods of AdminView  with this decorator can be extended by Plugin classes, and will be executed as the following procedure:</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p class="first">get the plugins property from the instance then retrieve the plugin with the same method name</p>
+</li>
+<li><p class="first">order by the &#8216;priority&#8217; of the plugins</p>
+</li>
+<li><p class="first">execute the plugin methods in order and follow the rules:</p>
+<blockquote>
+<div><ul>
+<li><p class="first">if no parameters are given to the plugin method, the return of AdminView method is not null and throws exception.</p>
+</li>
+<li><p class="first">If the first parameter passed to the plugin method is &#8216;__&#8217; then this parameter is the AdminView method. The plugin method will be executed through calling &#8216;__()&#8217; and before the  AdminView method.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">get_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">__</span><span class="p">):</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;key&#39;</span><span class="p">:</span> <span class="s">&#39;value&#39;</span><span class="p">}</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">__</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">c</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">If the first parameter of the plugin method is not &#8216;__&#8217;, the AdminView method will be executed and it&#8217;s return value will be passed as the first parameter.</p>
+</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">In final the plugins are executed sequentially and the results are returned in order.</p>
+</li>
+</ol>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.BaseAdminPlugin.init_request">
+<tt class="descname">init_request</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.BaseAdminPlugin.init_request" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is the initialization method of plugin class, which is the first invoked method after creating the plugin. Through this method, the plugin required attributes are initialized and check whether the current request needs to load this plugin instance. For example the implementation of Ajax plugin.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">init_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">is_ajax</span><span class="p">()</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">REQUEST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;_ajax&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>if the return value is &#8216;False&#8217;,  the corresponding AdminView instance will not load the pulgin</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="xadmin.views.BaseAdminView">
+<em class="property">class </em><tt class="descclassname">xadmin.views.</tt><tt class="descname">BaseAdminView</tt><big>(</big><em>request</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.BaseAdminView" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is the base class of all AdminView classes which is inherited from BaseAdminObject and django.views.generic.View.</p>
+<p>the core class of Xadmin framework, all AdminView classes need to inherit from this class. The most obvious difference between Xadmin and Django Admin is that every request will cause an instance of AdminView class be created which also is Class-based View implemented in Django 1.3, see Django official document Class-based generic views &lt;<a class="reference external" href="https://docs.djangoproject.com/en/1.4/topics/class-based-views/">https://docs.djangoproject.com/en/1.4/topics/class-based-views/</a>&gt;</p>
+<p>The Class-based view has many advantages. First, every time a request coming, an new instance with variables related to the current request is created to response, this is useful when extend the class or override the super class method.</p>
+<p>Second, Class-based View is easy to implement a plugin function and dynamically loading plugin because every instance of AdminView need to load specific plugins according to its circumstance, see BaseAdminPlugin class about the details.</p>
+<p>It is very simple to implement a customized AdminView class, for instance:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">xadmin.sites</span> <span class="kn">import</span> <span class="n">site</span>
+<span class="kn">from</span> <span class="nn">xadmin.views</span> <span class="kn">import</span> <span class="n">BaseAdminView</span>
+
+<span class="k">class</span> <span class="nc">MyAdminView</span><span class="p">(</span><span class="n">BaseAdminView</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<span class="n">site</span><span class="o">.</span><span class="n">register_view</span><span class="p">(</span><span class="s">r&#39;^me_test/$&#39;</span><span class="p">,</span> <span class="n">MyAdminView</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;my_test&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>By this you can access this view by <cite>me_test/</cite>. Meanwhile Xadmin offers some common AdminView classes and they are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p class="first">CommAdminView class, which is the basic view of general user interface,  provides the data required by Xadmin general user interface (such as menu).</p>
+</li>
+<li><p class="first">ModelAdminView class, one of the core classes, provide the Model-based AdminView classes.</p>
+</li>
+</ul>
+</div></blockquote>
+<dl class="classmethod">
+<dt id="xadmin.views.BaseAdminView.as_view">
+<em class="property">classmethod </em><tt class="descname">as_view</tt><big>(</big><big>)</big><a class="headerlink" href="#xadmin.views.BaseAdminView.as_view" title="Permalink to this definition">¶</a></dt>
+<dd><p>this overrides View.as_view method and integrates the View.dispatch method inside. Some initialization work is moved and completed by the initi method of AdminView class, please see &#8216;BaseAdminView.init_request&#8217;</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.BaseAdminView.get_context">
+<tt class="descname">get_context</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.BaseAdminView.get_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return the required context object to display the requested page.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.BaseAdminView.get_media">
+<tt class="descname">get_media</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.BaseAdminView.get_media" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>retrieve the required Media object to generate css and js files.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.BaseAdminView.init_plugin">
+<tt class="descname">init_plugin</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.BaseAdminView.init_plugin" title="Permalink to this definition">¶</a></dt>
+<dd><p>this is the plugin initialization method of AdminView class, which is called after BaseAdminView.init_request method execution. All plugins from the base_plugins attribute are instantiated in order and loaded according to the result of BaseAdminPlugin.init_request method. If the plugin is required it will be kept by the plugins  attribute.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.BaseAdminView.init_request">
+<tt class="descname">init_request</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.BaseAdminView.init_request" title="Permalink to this definition">¶</a></dt>
+<dd><p>it is designated to be overridden by the derived class to do the initialization, and has no real effects on the initialization of BaseAdminView class.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="xadmin.views.CommAdminView">
+<em class="property">class </em><tt class="descclassname">xadmin.views.</tt><tt class="descname">CommAdminView</tt><big>(</big><em>request</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.CommAdminView" title="Permalink to this definition">¶</a></dt>
+<dd><p>this is a generic AdminView class extending BaseAdminView. The global settings of Xadmin website can be done by this class, which are</p>
+<blockquote>
+<div><ul class="simple">
+<li><p class="first">Title of website</p>
+</li>
+<li><p class="first">Global icon for model</p>
+</li>
+<li><p class="first">Menu of website</p>
+</li>
+</ul>
+</div></blockquote>
+<p>** View property **</p>
+<blockquote>
+<div><dl class="attribute">
+<dt id="xadmin.views.CommAdminView.site_title">
+<tt class="descname">site_title</tt><em class="property"> = None</em><a class="headerlink" href="#xadmin.views.CommAdminView.site_title" title="Permalink to this definition">¶</a></dt>
+<dd><p>Title of website</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.CommAdminView.site_footer">
+<tt class="descname">site_footer</tt><em class="property"> = None</em><a class="headerlink" href="#xadmin.views.CommAdminView.site_footer" title="Permalink to this definition">¶</a></dt>
+<dd><p>网站的下角标文字</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.CommAdminView.global_models_icon">
+<tt class="descname">global_models_icon</tt><em class="property"> = {}</em><a class="headerlink" href="#xadmin.views.CommAdminView.global_models_icon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Global icon for model:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">globe_models_icon</span> <span class="o">=</span> <span class="p">{</span><span class="n">User</span><span class="p">:</span> <span class="s">&#39;user-icon&#39;</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.CommAdminView.base_template">
+<tt class="descname">base_template</tt><em class="property"> = 'xadmin/base_site.html'</em><a class="headerlink" href="#xadmin.views.CommAdminView.base_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>View模板继承的基础模板</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.CommAdminView.default_model_icon">
+<tt class="descname">default_model_icon</tt><em class="property"> = None</em><a class="headerlink" href="#xadmin.views.CommAdminView.default_model_icon" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div></blockquote>
+<dl class="method">
+<dt id="xadmin.views.CommAdminView.get_breadcrumb">
+<tt class="descname">get_breadcrumb</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.CommAdminView.get_breadcrumb" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.CommAdminView.get_context">
+<tt class="descname">get_context</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.CommAdminView.get_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p><strong>Context params</strong>:</p>
+<blockquote>
+<div><p><cite>site_title</cite>: assign a string value to this attribute to set the title of the site, the default value is &#8220;Django Xadmin&#8221;</p>
+<p><cite>nav_menu</cite>: it keeps the system menu items after processing the user&#8217;s permission. This attribute will be cached in SESSION if under non DEBUG mode.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.CommAdminView.get_model_icon">
+<tt class="descname">get_model_icon</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.CommAdminView.get_model_icon" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>It is used to get the icon of Model class, which actually is css class. The generated HTML is shown as the following:</p>
+<div class="highlight-python"><div class="highlight"><pre>&lt;i class=&quot;icon-model icon-{{model_icon}}&quot;&gt;&lt;/i&gt;
+</pre></div>
+</div>
+<p>This example applies the stand format of Bootstrap icon. For now Xadmin uses Font Icon (Font-Awesome), you can customized your icons, you can refer to <a class="reference external" href="http://fortawesome.github.com/Font-Awesome/#contribute">http://fortawesome.github.com/Font-Awesome/#contribute</a> to create a customized font and icon</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>The Model icons are used by the following places, and also you can use within your customized pages.</p>
+<blockquote class="last">
+<div><ul class="simple">
+<li><p class="first">system menu</p>
+</li>
+<li><p class="first">in the title of list page</p>
+</li>
+<li><p class="first">in the title of creating, updating and deleting page</p>
+</li>
+</ul>
+</div></blockquote>
+</div>
+<p>FAQ: if define Model icons</p>
+<p>A global Model icon can be set by the property &#8216;globe_models_icon&#8217; in the OptionClass of CommAdminView class. Or set the property &#8216;model_icon&#8217; in the OptionClass of Models.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.CommAdminView.get_nav_menu">
+<tt class="descname">get_nav_menu</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.CommAdminView.get_nav_menu" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>this method returns the website menu. If get_site_menu method return not none, the return value will be token as the first part the menu, and Xadmin appends the Model listing menu items as the rest part the menu. If None is returned by get_site_menu method, Xadmin will automatically generate two levels of menu according to App and Model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">格式见 <a class="reference internal" href="#xadmin.views.CommAdminView.get_site_menu" title="xadmin.views.CommAdminView.get_site_menu"><tt class="xref py py-meth docutils literal"><span class="pre">get_site_menu()</span></tt></a> 返回格式</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.CommAdminView.get_site_menu">
+<tt class="descname">get_site_menu</tt><big>(</big><big>)</big><a class="headerlink" href="#xadmin.views.CommAdminView.get_site_menu" title="Permalink to this definition">¶</a></dt>
+<dd><p>FAQ: how to customized system menu</p>
+<p>a method for the derived class to override and implement customized website menu. It can be overwritten via child class or OptionClass.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">({</span>
+    <span class="s">&quot;title&quot;</span><span class="p">:</span> <span class="s">&quot;菜单标题&quot;</span><span class="p">,</span> <span class="s">&quot;perm&quot;</span><span class="p">:</span> <span class="s">&quot;权限标示&quot;</span><span class="p">,</span> 
+    <span class="s">&quot;icon&quot;</span><span class="p">:</span> <span class="s">&quot;图标的 css class&quot;</span><span class="p">,</span> <span class="s">&quot;url&quot;</span><span class="p">:</span> <span class="s">&quot;菜单url&quot;</span><span class="p">,</span> 
+    <span class="s">&quot;menus&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">...</span><span class="p">]</span>    <span class="c"># 子菜单项</span>
+<span class="p">})</span>
+</pre></div>
+</div>
+<p>the values of &#8216;perm&#8217; and &#8216;url&#8217; in the menu can be provide by the shortcut methods BaseAdminObject.get_model_perm and BaseAdminObject.get_model_url if base on Model. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">AdminSettings</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">get_site_menu</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="p">{</span><span class="s">&#39;title&#39;</span><span class="p">:</span> <span class="s">&#39;内容管理&#39;</span><span class="p">,</span> <span class="s">&#39;perm&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_model_perm</span><span class="p">(</span><span class="n">Article</span><span class="p">,</span> <span class="s">&#39;change&#39;</span><span class="p">),</span> <span class="s">&#39;menus&#39;</span><span class="p">:(</span>
+                <span class="p">{</span><span class="s">&#39;title&#39;</span><span class="p">:</span> <span class="s">&#39;游戏资料&#39;</span><span class="p">,</span> <span class="s">&#39;icon&#39;</span><span class="p">:</span> <span class="s">&#39;info-sign&#39;</span><span class="p">,</span> <span class="s">&#39;url&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_model_url</span><span class="p">(</span><span class="n">Article</span><span class="p">,</span> <span class="s">&#39;changelist&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;?_rel_categories__id__exact=2&#39;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s">&#39;title&#39;</span><span class="p">:</span> <span class="s">&#39;网站文章&#39;</span><span class="p">,</span> <span class="s">&#39;icon&#39;</span><span class="p">:</span> <span class="s">&#39;file&#39;</span><span class="p">,</span> <span class="s">&#39;url&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_model_url</span><span class="p">(</span><span class="n">Article</span><span class="p">,</span> <span class="s">&#39;changelist&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;?_rel_categories__id__exact=1&#39;</span><span class="p">},</span>
+            <span class="p">)},</span>
+            <span class="p">{</span><span class="s">&#39;title&#39;</span><span class="p">:</span> <span class="s">&#39;分类管理&#39;</span><span class="p">,</span> <span class="s">&#39;perm&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_model_perm</span><span class="p">(</span><span class="n">Category</span><span class="p">,</span> <span class="s">&#39;change&#39;</span><span class="p">),</span> <span class="s">&#39;menus&#39;</span><span class="p">:(</span>
+                <span class="p">{</span><span class="s">&#39;title&#39;</span><span class="p">:</span> <span class="s">&#39;主要分类&#39;</span><span class="p">,</span> <span class="s">&#39;url&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_model_url</span><span class="p">(</span><span class="n">Category</span><span class="p">,</span> <span class="s">&#39;changelist&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;?_p_parent__isnull=True&#39;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s">&#39;title&#39;</span><span class="p">:</span> <span class="s">&#39;游戏资料&#39;</span><span class="p">,</span> <span class="s">&#39;url&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_model_url</span><span class="p">(</span><span class="n">Category</span><span class="p">,</span> <span class="s">&#39;changelist&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;?_rel_parent__id__exact=2&#39;</span><span class="p">},</span>
+            <span class="p">)},</span>
+        <span class="p">)</span>
+
+<span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">CommAdminView</span><span class="p">,</span> <span class="n">AdminSettings</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="xadmin.views.ModelAdminView">
+<em class="property">class </em><tt class="descclassname">xadmin.views.</tt><tt class="descname">ModelAdminView</tt><big>(</big><em>request</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelAdminView" title="Permalink to this definition">¶</a></dt>
+<dd><p>this is a Model-based AdminView class. The AdminSite instance will automatically create a url to the class extending ModelAdminView for each registered Model class. The registration is completed by calling the register_modelview method of AdminSite instance. To see the details please refer to the method API document, or see the following example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">xadmin.views</span> <span class="kn">import</span> <span class="n">ModelAdminView</span>
+
+<span class="k">class</span> <span class="nc">TestModelAdminView</span><span class="p">(</span><span class="n">ModelAdminView</span><span class="p">):</span>
+    
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">obj_id</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<span class="n">site</span><span class="o">.</span><span class="n">register_modelview</span><span class="p">(</span><span class="s">r&#39;^(.+)/test/$&#39;</span><span class="p">,</span> <span class="n">TestModelAdminView</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">_test&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>the user can access this view by path <cite>/%(app_label)s/%(module_name)s/123/test</cite> after it is registered.</p>
+<p>Option properties</p>
+<blockquote>
+<div><dl class="attribute">
+<dt id="xadmin.views.ModelAdminView.fields">
+<tt class="descname">fields</tt><em class="property"> = None</em><a class="headerlink" href="#xadmin.views.ModelAdminView.fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>list or tuple type, it defines the fields will be displayed</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ModelAdminView.exclude">
+<tt class="descname">exclude</tt><em class="property"> = None</em><a class="headerlink" href="#xadmin.views.ModelAdminView.exclude" title="Permalink to this definition">¶</a></dt>
+<dd><p>list or tuple type, it defines the fields will be excluded from the editing page</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ModelAdminView.ordering">
+<tt class="descname">ordering</tt><em class="property"> = None</em><a class="headerlink" href="#xadmin.views.ModelAdminView.ordering" title="Permalink to this definition">¶</a></dt>
+<dd><p>it is a dict type, the default order for the reterieved Model queryset.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ModelAdminView.model">
+<tt class="descname">model</tt><em class="property"> = None</em><a class="headerlink" href="#xadmin.views.ModelAdminView.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>a bounded Model class, which is automatically assigned to OptionClass when register the Model class, see the regsiter method of AdminSite class</p>
+</dd></dl>
+
+</div></blockquote>
+<p>instance property</p>
+<blockquote>
+<div><dl class="attribute">
+<dt id="xadmin.views.ModelAdminView.opts">
+<tt class="descname">opts</tt><a class="headerlink" href="#xadmin.views.ModelAdminView.opts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Model._meta</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ModelAdminView.app_label">
+<tt class="descname">app_label</tt><a class="headerlink" href="#xadmin.views.ModelAdminView.app_label" title="Permalink to this definition">¶</a></dt>
+<dd><p>即 Model._meta.app_label</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ModelAdminView.module_name">
+<tt class="descname">module_name</tt><a class="headerlink" href="#xadmin.views.ModelAdminView.module_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Model._meta.module_name</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ModelAdminView.model_info">
+<tt class="descname">model_info</tt><a class="headerlink" href="#xadmin.views.ModelAdminView.model_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>即 (self.app_label, self.module_name)</p>
+</dd></dl>
+
+</div></blockquote>
+<dl class="method">
+<dt id="xadmin.views.ModelAdminView.get_breadcrumb">
+<tt class="descname">get_breadcrumb</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelAdminView.get_breadcrumb" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelAdminView.get_context">
+<tt class="descname">get_context</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelAdminView.get_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p><strong>Context params</strong>:</p>
+<blockquote>
+<div><p>opts: the _meta attribute of Model class</p>
+<p>app_label: the app_label attribute of Model class</p>
+<p>module_name: the module_name attribute of Model class</p>
+<p>verbose_name: the verbose_name of Model class</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelAdminView.get_model_perms">
+<tt class="descname">get_model_perms</tt><big>(</big><big>)</big><a class="headerlink" href="#xadmin.views.ModelAdminView.get_model_perms" title="Permalink to this definition">¶</a></dt>
+<dd><p>return a dict containing all permissions, which has key values: add, view, change, delete with boolean values indicating whether the current user has the corresponding permission.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelAdminView.get_object">
+<tt class="descname">get_object</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelAdminView.get_object" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>get the unique instance of Model through object_id. If the Model instance does not exist return None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelAdminView.get_object_url">
+<tt class="descname">get_object_url</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelAdminView.get_object_url" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelAdminView.get_ordering">
+<tt class="descname">get_ordering</tt><big>(</big><big>)</big><a class="headerlink" href="#xadmin.views.ModelAdminView.get_ordering" title="Permalink to this definition">¶</a></dt>
+<dd><p>return the ordering of the Model list. The default return value is ModelAdminView.ordering, which can be overridden by the subclass.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelAdminView.get_template_list">
+<tt class="descname">get_template_list</tt><big>(</big><em>template_name</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelAdminView.get_template_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>return a list of templates according to template_name. The created page is one of these templates and you can easily override this method to get the customized template. The list format is shown as the following:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="s">&quot;xadmin/</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">opts</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span> <span class="n">opts</span><span class="o">.</span><span class="n">object_name</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">template_name</span><span class="p">),</span>
+<span class="s">&quot;xadmin/</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">opts</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span> <span class="n">template_name</span><span class="p">),</span>
+<span class="s">&quot;xadmin/</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">template_name</span><span class="p">,</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelAdminView.has_add_permission">
+<tt class="descname">has_add_permission</tt><big>(</big><big>)</big><a class="headerlink" href="#xadmin.views.ModelAdminView.has_add_permission" title="Permalink to this definition">¶</a></dt>
+<dd><p>return whether the current user has addition right</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelAdminView.has_change_permission">
+<tt class="descname">has_change_permission</tt><big>(</big><em>obj=None</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelAdminView.has_change_permission" title="Permalink to this definition">¶</a></dt>
+<dd><p>return whether the current user has the updating right</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelAdminView.has_delete_permission">
+<tt class="descname">has_delete_permission</tt><big>(</big><em>obj=None</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelAdminView.has_delete_permission" title="Permalink to this definition">¶</a></dt>
+<dd><p>return whether the current user has the deletion right</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelAdminView.has_view_permission">
+<tt class="descname">has_view_permission</tt><big>(</big><em>obj=None</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelAdminView.has_view_permission" title="Permalink to this definition">¶</a></dt>
+<dd><p>return whether the current user has the view right</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">in the current version, if a user has the updating right then also own the view right. This default can be changed with your customized subclass</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelAdminView.model_admin_url">
+<tt class="descname">model_admin_url</tt><big>(</big><em>name</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelAdminView.model_admin_url" title="Permalink to this definition">¶</a></dt>
+<dd><p>this method function is equivalent BaseAdminObject.get_admin_url, expect for using its model attribute inherited from ModelAdminView class, therefore the model parameter is not required.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelAdminView.queryset">
+<tt class="descname">queryset</tt><big>(</big><big>)</big><a class="headerlink" href="#xadmin.views.ModelAdminView.queryset" title="Permalink to this definition">¶</a></dt>
+<dd><p>return the Model queryset. This can be used to query the model data</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="xadmin.views.ListAdminView">
+<em class="property">class </em><tt class="descclassname">xadmin.views.</tt><tt class="descname">ListAdminView</tt><big>(</big><em>request</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView" title="Permalink to this definition">¶</a></dt>
+<dd><p>this is the data list AdminView class, which implements the data sorting and paging functions.</p>
+<p>Option properties</p>
+<blockquote>
+<div><dl class="attribute">
+<dt id="xadmin.views.ListAdminView.list_display">
+<tt class="descname">list_display</tt><em class="property"> = ('__str__',)</em><a class="headerlink" href="#xadmin.views.ListAdminView.list_display" title="Permalink to this definition">¶</a></dt>
+<dd><p>the default field list to display</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ListAdminView.list_display_links">
+<tt class="descname">list_display_links</tt><em class="property"> = ()</em><a class="headerlink" href="#xadmin.views.ListAdminView.list_display_links" title="Permalink to this definition">¶</a></dt>
+<dd><p>the list of links to display data in details which are editable</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ListAdminView.list_select_related">
+<tt class="descname">list_select_related</tt><em class="property"> = None</em><a class="headerlink" href="#xadmin.views.ListAdminView.list_select_related" title="Permalink to this definition">¶</a></dt>
+<dd><p>the setting of whether load the related data in advance, using select_related</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ListAdminView.list_per_page">
+<tt class="descname">list_per_page</tt><em class="property"> = 50</em><a class="headerlink" href="#xadmin.views.ListAdminView.list_per_page" title="Permalink to this definition">¶</a></dt>
+<dd><p>the number of data records displayed in each page.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ListAdminView.list_max_show_all">
+<tt class="descname">list_max_show_all</tt><em class="property"> = 200</em><a class="headerlink" href="#xadmin.views.ListAdminView.list_max_show_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>the maximum number of data records displayed in each page.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ListAdminView.list_exclude">
+<tt class="descname">list_exclude</tt><em class="property"> = ()</em><a class="headerlink" href="#xadmin.views.ListAdminView.list_exclude" title="Permalink to this definition">¶</a></dt>
+<dd><p>the list of fields excluded from displaying, this list contains the fields that are not be displayed in the page.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ListAdminView.search_fields">
+<tt class="descname">search_fields</tt><em class="property"> = ()</em><a class="headerlink" href="#xadmin.views.ListAdminView.search_fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>search data with fields keywords listed by this attribute.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ListAdminView.ordering">
+<tt class="descname">ordering</tt><em class="property"> = None</em><a class="headerlink" href="#xadmin.views.ListAdminView.ordering" title="Permalink to this definition">¶</a></dt>
+<dd><p>the default data order</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ListAdminView.object_list_template">
+<tt class="descname">object_list_template</tt><em class="property"> = None</em><a class="headerlink" href="#xadmin.views.ListAdminView.object_list_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>define the template used to display data</p>
+</dd></dl>
+
+</div></blockquote>
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.get">
+<tt class="descname">get</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>display the Model list</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.get_check_field_url">
+<tt class="descname">get_check_field_url</tt><big>(</big><em>f</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.get_check_field_url" title="Permalink to this definition">¶</a></dt>
+<dd><p>return the url of every item in the &#8216;show list&#8217; menu item</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.get_context">
+<tt class="descname">get_context</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.get_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p><strong>Context params</strong>:</p>
+<blockquote>
+<div><p>&#8216;model_fields&#8217; defines the list information that can be displayed, which is used for &#8216;select list to show&#8217; function</p>
+<p>result_headers contains the head information of list table, is the instance of ResultHeader class</p>
+<p>&#8216;results&#8217;: the cells in each row of the table, which is the instance object of ResultItem class</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.get_list_display">
+<tt class="descname">get_list_display</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.get_list_display" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>obtain the columns to display. If the request contains &#8216;_cols&#8217; parameter then use &#8216;_cols&#8217;, otherwise use &#8216;list_display&#8217; attribute</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this method only save the value of list_display with the &#8216;base_list_display&#8217; attribute. If some plugin (e.g. Action plugin) add extra values to this method returned value, the number of displayed column increases but the added data is not effective to other plugins (e.g. the export plugin). This keeps the original data of displayed column separated, which can be retrieved from &#8216;base_list_display&#8217;.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.get_list_display_links">
+<tt class="descname">get_list_display_links</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.get_list_display_links" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return a group of column displayed as links to editing page (if the current user has editing permission) or to view page. In default, the attribute of &#8216;list_display_links&#8217; is used for this function if it is not None, or make the first item in list_display attribute as a link.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.get_list_queryset">
+<tt class="descname">get_list_queryset</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.get_list_queryset" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>obtain the Model&#8217;s queryset that is sorted and filtered, and other plugins can modify this queryset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.get_media">
+<tt class="descname">get_media</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.get_media" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return the Media object, and ListAdminView employs &#8216;xadmin.page.list.js&#8217; javascript file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.get_model_method_fields">
+<tt class="descname">get_model_method_fields</tt><big>(</big><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.get_model_method_fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>make and display a  column with the returned value from methods in OptionClass which has True for is_column attribute. Those methods are wrapped by FakeMethodField and the displayed values are turned to fake database fields.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.get_ordering">
+<tt class="descname">get_ordering</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.get_ordering" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>Returns the list of ordering fields for the change list.
+First we check the get_ordering() method in model admin, then we check
+the object&#8217;s default ordering. Then, any manually-specified ordering
+from the query string overrides anything. Finally, a deterministic
+order is guaranteed by ensuring the primary key is used as the last
+ordering field.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.get_ordering_field">
+<tt class="descname">get_ordering_field</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.get_ordering_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>obtain the field names need to be sorted from the &#8216;field_name&#8217; parameter which can be a standard database field or callable or one Model attribute of OptionClass. In this case, the &#8216;admin_order_field&#8217; attribute is taken for sorting. If no value of &#8216;admin_order_field&#8217; is given return None.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">UserAdmin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">my_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">my_field</span><span class="o">.</span><span class="n">admin_order_field</span> <span class="o">=</span> <span class="s">&#39;name&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.get_ordering_field_columns">
+<tt class="descname">get_ordering_field_columns</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.get_ordering_field_columns" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>Returns a SortedDict of ordering field column numbers and asc/desc</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.get_page_number">
+<tt class="descname">get_page_number</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.get_page_number" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return the html code of pagination component, bootstrap is applied in default.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>i</strong> &#8211; 页码, 可能是 <tt class="docutils literal"><span class="pre">DOT</span></tt></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.get_paginator">
+<tt class="descname">get_paginator</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.get_paginator" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>use paginator_class to instantiate a paginator object and return it.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.get_response">
+<tt class="descname">get_response</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.get_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>in default this method has no return value after executing &#8216;get_context&#8217; method, but plugins can override it and return specified HttpResponse object.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.get_result_list">
+<tt class="descname">get_result_list</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.get_result_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.init_request">
+<tt class="descname">init_request</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.init_request" title="Permalink to this definition">¶</a></dt>
+<dd><p>initialize the request and check whether the current user has view permission, then do initializing the variables required by generating data for the list view.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.make_result_list">
+<tt class="descname">make_result_list</tt><big>(</big><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.make_result_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>make data and pagination for the list view, the displayed data is assigned to &#8216;result_list&#8217; arrtibute. Plugins can process the generated data after this method.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.post">
+<tt class="descname">post</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.post" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>process the POST request of Model list view and return the same result with GET request in default. Plugins can override &#8216;post_response&#8217; method to change the return value for POST request.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.post_response">
+<tt class="descname">post_response</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.post_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>this method can be used to process the response to POST request, it returns None in default. Plugins can override it and return specified HttpResponse.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.post_result_list">
+<tt class="descname">post_result_list</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.post_result_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.result_header">
+<tt class="descname">result_header</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.result_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return a column header information of the table in list view, which is an instance of ResultHeader class.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>field_name</strong> &#8211; 列的名字</li>
+<li><strong>row</strong> &#8211; <tt class="xref py py-class docutils literal"><span class="pre">ResultHeader</span></tt> 实例</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.result_headers">
+<tt class="descname">result_headers</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.result_headers" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return the header information of the table in list view, which is an instance of &#8216;ResultRow&#8217; class. The column information is kept by &#8216;cells&#8217; attribute of  &#8216;ResultRow&#8217; class</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.result_item">
+<tt class="descname">result_item</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.result_item" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return a field value of a Model object record, which is a &#8216;ResultItem&#8217; instance.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>obj</strong> &#8211; Model 对象</li>
+<li><strong>field_name</strong> &#8211; 列的名字</li>
+<li><strong>row</strong> &#8211; <tt class="xref py py-class docutils literal"><span class="pre">ResultHeader</span></tt> 实例</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.result_row">
+<tt class="descname">result_row</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.result_row" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return a row with model instance data to display, which is actually instance of &#8216;ResultRow&#8217; class. The &#8216;cells&#8217; attribute of &#8216;ResultRow&#8217; contains the detail information for all columns.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>obj</strong> &#8211; Model 对象</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.results">
+<tt class="descname">results</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.results" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return entire data to display with list view, and an object of &#8216;ResultRow&#8217; class contains all rows information.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ListAdminView.url_for_result">
+<tt class="descname">url_for_result</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ListAdminView.url_for_result" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return a link to the details of the displayed data. If the current user has the updating permission, the link will redirect to updating page, otherwise to the details page.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>result</strong> &#8211; Model 对象</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="xadmin.views.ModelFormAdminView">
+<em class="property">class </em><tt class="descclassname">xadmin.views.</tt><tt class="descname">ModelFormAdminView</tt><big>(</big><em>request</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelFormAdminView" title="Permalink to this definition">¶</a></dt>
+<dd><p>this AdminView class is a base class used to create or update data basing on a model form. It provides functions such as displaying and updating data through form. Class &#8216;CreateAdminView&#8217; and &#8216;UpdateAdminView&#8217; inherit from this class.</p>
+<p>Option properties</p>
+<blockquote>
+<div><dl class="attribute">
+<dt id="xadmin.views.ModelFormAdminView.form">
+<tt class="descname">form</tt><em class="property"> = &lt;class 'django.forms.models.ModelForm'&gt;</em><a class="headerlink" href="#xadmin.views.ModelFormAdminView.form" title="Permalink to this definition">¶</a></dt>
+<dd><p>refers to the Form class used to generate form object basing on Model class, it is django.forms.ModelForm by default.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ModelFormAdminView.formfield_overrides">
+<tt class="descname">formfield_overrides</tt><em class="property"> = {}</em><a class="headerlink" href="#xadmin.views.ModelFormAdminView.formfield_overrides" title="Permalink to this definition">¶</a></dt>
+<dd><p>specify a Form Field class to override the Model Field, for example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">AtricleAdmin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">formfield_overrides</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">FileField</span><span class="p">:{</span><span class="s">&#39;widget&#39;</span><span class="p">:</span> <span class="n">mywidgets</span><span class="o">.</span><span class="n">XFileWidget</span><span class="p">},</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+<p>by this, <cite>mywidgets.XFileWidget</cite> is used to display all FileField defined in the model class.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ModelFormAdminView.readonly_fields">
+<tt class="descname">readonly_fields</tt><em class="property"> = ()</em><a class="headerlink" href="#xadmin.views.ModelFormAdminView.readonly_fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>specifies read-only fields which can not be edited.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ModelFormAdminView.style_fields">
+<tt class="descname">style_fields</tt><em class="property"> = {}</em><a class="headerlink" href="#xadmin.views.ModelFormAdminView.style_fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>specifies the Style for a given Field. Style can make different display effects for one field type. For instance, radio button has common and inline Style values. Xadmin will implement more Field Style for form plugins. You can apply a certain style by setting a defined Style value.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">AtricleAdmin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">style_fields</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;content&quot;</span><span class="p">:</span> <span class="s">&quot;rich-textarea&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+<p><cite>rich-textarea</cite> is Style value provided by some plugin class, thus the &#8216;content&#8217; will displayed by this plugin style.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ModelFormAdminView.relfield_style">
+<tt class="descname">relfield_style</tt><em class="property"> = None</em><a class="headerlink" href="#xadmin.views.ModelFormAdminView.relfield_style" title="Permalink to this definition">¶</a></dt>
+<dd><p>if the model is referred by some other models, this referred model will apply the value of relfield_style as the Field Style to display in other models.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ModelFormAdminView.save_as">
+<tt class="descname">save_as</tt><em class="property"> = False</em><a class="headerlink" href="#xadmin.views.ModelFormAdminView.save_as" title="Permalink to this definition">¶</a></dt>
+<dd><p>whether display &#8216;Save as&#8217; button.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ModelFormAdminView.save_on_top">
+<tt class="descname">save_on_top</tt><em class="property"> = False</em><a class="headerlink" href="#xadmin.views.ModelFormAdminView.save_on_top" title="Permalink to this definition">¶</a></dt>
+<dd><p>whether display a group of button on the top of the page.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ModelFormAdminView.add_form_template">
+<tt class="descname">add_form_template</tt><em class="property"> = None</em><a class="headerlink" href="#xadmin.views.ModelFormAdminView.add_form_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>the template page for adding model.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ModelFormAdminView.change_form_template">
+<tt class="descname">change_form_template</tt><em class="property"> = None</em><a class="headerlink" href="#xadmin.views.ModelFormAdminView.change_form_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>the template page for updating model.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.ModelFormAdminView.form_layout">
+<tt class="descname">form_layout</tt><em class="property"> = None</em><a class="headerlink" href="#xadmin.views.ModelFormAdminView.form_layout" title="Permalink to this definition">¶</a></dt>
+<dd><p>this is the object of form Layout, which is also a standard object of Crispy Form Layout. Using Layout can easily define the structure of the page. Please refer to Crispy Form document <a class="reference external" href="http://django-crispy-forms.readthedocs.org/en/latest/layouts.html">http://django-crispy-forms.readthedocs.org/en/latest/layouts.html</a> to see details. Here is an example of form_layout:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">xadmin.layout</span> <span class="kn">import</span> <span class="n">Main</span><span class="p">,</span> <span class="n">Side</span><span class="p">,</span> <span class="n">Fieldset</span><span class="p">,</span> <span class="n">Row</span><span class="p">,</span> <span class="n">AppendedText</span>
+
+<span class="k">class</span> <span class="nc">AtricleAdmin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">form_layout</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">Main</span><span class="p">(</span>
+            <span class="n">Fieldset</span><span class="p">(</span><span class="s">&#39;Comm data&#39;</span><span class="p">,</span>
+                <span class="s">&#39;title&#39;</span><span class="p">,</span> <span class="s">&#39;category&#39;</span>
+            <span class="p">),</span>
+            <span class="n">Inline</span><span class="p">(</span><span class="n">Log</span><span class="p">),</span>
+            <span class="n">Fieldset</span><span class="p">(</span><span class="s">&#39;Details&#39;</span><span class="p">,</span>
+                <span class="s">&#39;short_title&#39;</span><span class="p">,</span>
+                <span class="n">Row</span><span class="p">(</span><span class="n">AppendedText</span><span class="p">(</span><span class="s">&#39;file_size&#39;</span><span class="p">,</span> <span class="s">&#39;MB&#39;</span><span class="p">),</span> <span class="s">&#39;author&#39;</span><span class="p">),</span>
+                <span class="s">&#39;content&#39;</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">Side</span><span class="p">(</span>
+            <span class="n">Fieldset</span><span class="p">(</span><span class="s">&#39;Status&#39;</span><span class="p">,</span>
+                <span class="s">&#39;status&#39;</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<p>please check the document of &#8216;form_layout&#8217; about the elements information of Layout.</p>
+</dd></dl>
+
+</div></blockquote>
+<dl class="method">
+<dt id="xadmin.views.ModelFormAdminView.formfield_for_dbfield">
+<tt class="descname">formfield_for_dbfield</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelFormAdminView.formfield_for_dbfield" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>a callback method during the process of generating form instance, returns instance of Form Field.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>db_field</strong> &#8211; Model 的 DB Field</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelFormAdminView.get">
+<tt class="descname">get</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelFormAdminView.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>display the form, the detail procedure is shown as the following:</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p class="first">call &#8216;perpare_form&#8217; method</p>
+</li>
+<li><p class="first">call &#8216;instance_forms&#8217; method</p>
+<blockquote>
+<div><p>2.1 call &#8216;get_form_datas&#8217; method</p>
+</div></blockquote>
+</li>
+<li><p class="first">call &#8216;setup_forms&#8217; method</p>
+</li>
+<li><p class="first">call &#8216;get_response&#8217; method</p>
+</li>
+</ol>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelFormAdminView.get_context">
+<tt class="descname">get_context</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelFormAdminView.get_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>Context Params:</p>
+<blockquote>
+<div><p>&#8216;form&#8217;: a Form object</p>
+<p>&#8216;original&#8217;: the original data object for updating</p>
+<p><cite>show_delete</cite>: whether display the deleted items</p>
+<p>&#8216;add&#8217;: whether this is adding data</p>
+<p>&#8216;change&#8217;: whether this is updating data</p>
+<p>&#8216;errors&#8217;: the form error messages</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelFormAdminView.get_error_list">
+<tt class="descname">get_error_list</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelFormAdminView.get_error_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>get the list of form error messges</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelFormAdminView.get_field_attrs">
+<tt class="descname">get_field_attrs</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelFormAdminView.get_field_attrs" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return a dict containing the Form Field attributes according to the model Field attributes</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>db_field</strong> &#8211; Model 的 DB Field</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelFormAdminView.get_field_style">
+<tt class="descname">get_field_style</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelFormAdminView.get_field_style" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return the Form Field attributes according to the Field Style. This method can be filtered out by plugins and provide different Styles.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>db_field</strong> &#8211; Model 的 DB Field</li>
+<li><strong>style</strong> &#8211; 配置的 Field Style，该值来自于属性 <a class="reference internal" href="#xadmin.views.ModelFormAdminView.style_fields" title="xadmin.views.ModelFormAdminView.style_fields"><tt class="xref py py-attr docutils literal"><span class="pre">style_fields</span></tt></a></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelFormAdminView.get_form_helper">
+<tt class="descname">get_form_helper</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelFormAdminView.get_form_helper" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>obtain the instance of FormHelper required by the Crispy Form. The details can be found with Crisp Form document</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelFormAdminView.get_form_layout">
+<tt class="descname">get_form_layout</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelFormAdminView.get_form_layout" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return the Form Layout object. If the form_layout attribute is set then return it, otherwise return the automatically generated Form Layout object. More Form Layout information can see Crispy Form document. Setting customized Form Layout object is more flexible way to render every element of form.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelFormAdminView.get_media">
+<tt class="descname">get_media</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelFormAdminView.get_media" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelFormAdminView.get_model_form">
+<tt class="descname">get_model_form</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelFormAdminView.get_model_form" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return ModelForm object which is used to display the form.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelFormAdminView.get_readonly_fields">
+<tt class="descname">get_readonly_fields</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelFormAdminView.get_readonly_fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return the read-only fields, the derived classes or OPtionClass can override this method.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelFormAdminView.instance_forms">
+<tt class="descname">instance_forms</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelFormAdminView.instance_forms" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>instantiate the Form object with the return value of &#8216;get_form_datas&#8217; method, and then keep this Form object with &#8216;form_obj&#8217; attribute.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelFormAdminView.post">
+<tt class="descname">post</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelFormAdminView.post" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>save form data. The detail procedure is executed as the following:</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p class="first">call &#8216;perpare_form&#8217; method</p>
+</li>
+<li><p class="first">call &#8216;instance_forms&#8217; method</p>
+<blockquote>
+<div><p>2.1 call &#8216;get_form_datas&#8217; method</p>
+</div></blockquote>
+</li>
+<li><p class="first">call &#8216;setup_forms&#8217; method</p>
+</li>
+<li><p class="first">&#8216;valid_forms&#8217; method</p>
+<blockquote>
+<div><p>4.1 call &#8216;save_forms&#8217; method</p>
+<p>4.2 call &#8216;save_models&#8217; method</p>
+<p>4.3 call &#8216;save_related&#8217; method</p>
+<p>4.4 call &#8216;post_response&#8217; method</p>
+</div></blockquote>
+</li>
+</ol>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelFormAdminView.prepare_form">
+<tt class="descname">prepare_form</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelFormAdminView.prepare_form" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>prepare the Form class through call method &#8216;get_model_form&#8217;, then assign to &#8216;model_form&#8217; attribute</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelFormAdminView.save_forms">
+<tt class="descname">save_forms</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelFormAdminView.save_forms" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>save the form object to &#8216;new_obj&#8217; attribute, note that this model object has not been saved to database nor pk is generated.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelFormAdminView.save_models">
+<tt class="descname">save_models</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelFormAdminView.save_models" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>save the data to the corresponding table in the database.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelFormAdminView.save_related">
+<tt class="descname">save_related</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelFormAdminView.save_related" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>save the related data.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelFormAdminView.setup_forms">
+<tt class="descname">setup_forms</tt><big>(</big><big>)</big><a class="headerlink" href="#xadmin.views.ModelFormAdminView.setup_forms" title="Permalink to this definition">¶</a></dt>
+<dd><p>set up a Form class</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.ModelFormAdminView.valid_forms">
+<tt class="descname">valid_forms</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.ModelFormAdminView.valid_forms" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>validate the Form data.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="xadmin.views.CreateAdminView">
+<em class="property">class </em><tt class="descclassname">xadmin.views.</tt><tt class="descname">CreateAdminView</tt><big>(</big><em>request</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.CreateAdminView" title="Permalink to this definition">¶</a></dt>
+<dd><p>this Model AdminView is used to create a model object which inherits from ModelFormAdminView class.</p>
+<dl class="method">
+<dt id="xadmin.views.CreateAdminView.get_breadcrumb">
+<tt class="descname">get_breadcrumb</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.CreateAdminView.get_breadcrumb" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.CreateAdminView.get_context">
+<tt class="descname">get_context</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.CreateAdminView.get_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>Context Params:</p>
+<blockquote>
+<div><p>&#8216;title&#8217;: the form title</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.CreateAdminView.get_form_datas">
+<tt class="descname">get_form_datas</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.CreateAdminView.get_form_datas" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>get the form initial data from Requet</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.CreateAdminView.get_response">
+<tt class="descname">get_response</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.CreateAdminView.get_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>返回显示表单页面的 Response ，子类或是 OptionClass 可以复写该方法</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.CreateAdminView.post_response">
+<tt class="descname">post_response</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.CreateAdminView.post_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>this method returns a HttpResponse object or HttpRedirectResponse object after successfully saving the model object to database.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="xadmin.views.UpdateAdminView">
+<em class="property">class </em><tt class="descclassname">xadmin.views.</tt><tt class="descname">UpdateAdminView</tt><big>(</big><em>request</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.UpdateAdminView" title="Permalink to this definition">¶</a></dt>
+<dd><p>this Model AdminView class is for updating model object, which inherits from ModelFormAdminView class.</p>
+<dl class="method">
+<dt id="xadmin.views.UpdateAdminView.get_breadcrumb">
+<tt class="descname">get_breadcrumb</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.UpdateAdminView.get_breadcrumb" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.UpdateAdminView.get_context">
+<tt class="descname">get_context</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.UpdateAdminView.get_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>Context Params:</p>
+<blockquote>
+<div><p>&#8216;title&#8217;: the form title</p>
+<p>&#8216;object_id&#8217;: the id of updated object</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.UpdateAdminView.get_form_datas">
+<tt class="descname">get_form_datas</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.UpdateAdminView.get_form_datas" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>obtain the Form object data</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.UpdateAdminView.get_response">
+<tt class="descname">get_response</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.UpdateAdminView.get_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.UpdateAdminView.post_response">
+<tt class="descname">post_response</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.UpdateAdminView.post_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return HttpResponse or HttpRedirectResponse object after the model object is successfully updated.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="xadmin.views.DeleteAdminView">
+<em class="property">class </em><tt class="descclassname">xadmin.views.</tt><tt class="descname">DeleteAdminView</tt><big>(</big><em>request</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.DeleteAdminView" title="Permalink to this definition">¶</a></dt>
+<dd><p>the Model AdminView used to delete model object.</p>
+<p>Option attributes</p>
+<blockquote>
+<div><dl class="attribute">
+<dt id="xadmin.views.DeleteAdminView.delete_confirmation_template">
+<tt class="descname">delete_confirmation_template</tt><em class="property"> = None</em><a class="headerlink" href="#xadmin.views.DeleteAdminView.delete_confirmation_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>the template page for confirming deletion</p>
+</dd></dl>
+
+</div></blockquote>
+<p>instance property</p>
+<blockquote>
+<div><dl class="attribute">
+<dt id="xadmin.views.DeleteAdminView.obj">
+<tt class="descname">obj</tt><a class="headerlink" href="#xadmin.views.DeleteAdminView.obj" title="Permalink to this definition">¶</a></dt>
+<dd><p>the model object that will be deleted</p>
+</dd></dl>
+
+</div></blockquote>
+<dl class="method">
+<dt id="xadmin.views.DeleteAdminView.delete_model">
+<tt class="descname">delete_model</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.DeleteAdminView.delete_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>delete &#8216;self.obj&#8217;</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.DeleteAdminView.get">
+<tt class="descname">get</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.DeleteAdminView.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.DeleteAdminView.get_breadcrumb">
+<tt class="descname">get_breadcrumb</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.DeleteAdminView.get_breadcrumb" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.DeleteAdminView.get_context">
+<tt class="descname">get_context</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.DeleteAdminView.get_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>Context Params:</p>
+<blockquote>
+<div><p><tt class="docutils literal"><span class="pre">title</span></tt> : 确认删除的标题，如果您没有权限删除的话，会提示无法删除</p>
+<p>&#8216;object&#8217;: the object that will be deleted</p>
+<p><tt class="docutils literal"><span class="pre">deleted_objects</span></tt> : 关联被删除的所有数据对象</p>
+<p>‘perms_lacking’: the missing permissions</p>
+<p>&#8216;protected&#8217;: the protected data, the data can not be deleted.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.DeleteAdminView.init_request">
+<tt class="descname">init_request</tt><big>(</big><em>object_id</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.DeleteAdminView.init_request" title="Permalink to this definition">¶</a></dt>
+<dd><p>do initialization. Retrieve the object that will be deleted by the keyword of &#8216;object_id&#8217; and check whether the current user has the required permission.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.DeleteAdminView.post">
+<tt class="descname">post</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.DeleteAdminView.post" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.DeleteAdminView.post_response">
+<tt class="descname">post_response</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.DeleteAdminView.post_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>the process after successfully deleting. First message the user about the result then redirect to corresponding view according to the user&#8217;s permission. If the user has view permission then redirected page is view page, otherwise go to the index page.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="xadmin.views.DetailAdminView">
+<em class="property">class </em><tt class="descclassname">xadmin.views.</tt><tt class="descname">DetailAdminView</tt><big>(</big><em>request</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.DetailAdminView" title="Permalink to this definition">¶</a></dt>
+<dd><p>the mode AdminView class that shows the details of model. The view page is only for view data. The view layout is the same with class:<a href="#id1"><span class="problematic" id="id2">`</span></a>xadmin.views.edit.ModelFormAdminView</p>
+<p>Option attributes</p>
+<blockquote>
+<div><dl class="attribute">
+<dt id="xadmin.views.DetailAdminView.detail_layout">
+<tt class="descname">detail_layout</tt><em class="property"> = None</em><a class="headerlink" href="#xadmin.views.DetailAdminView.detail_layout" title="Permalink to this definition">¶</a></dt>
+<dd><p>the Layout object of the detail page is a standard Crispy Form Layout object. The advantage of using Layout is that page layout can be well organized.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.DetailAdminView.detail_show_all">
+<tt class="descname">detail_show_all</tt><em class="property"> = True</em><a class="headerlink" href="#xadmin.views.DetailAdminView.detail_show_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>whether display all fields, and the default value is &#8216;True&#8217;. If this is set as &#8216;True&#8217;, those fields not set with the layout object will be displayed, otherwise hide them.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.views.DetailAdminView.detail_template">
+<tt class="descname">detail_template</tt><em class="property"> = None</em><a class="headerlink" href="#xadmin.views.DetailAdminView.detail_template" title="Permalink to this definition">¶</a></dt>
+<dd><p>the template of the detail view page.</p>
+</dd></dl>
+
+</div></blockquote>
+<p>instance property</p>
+<blockquote>
+<div><dl class="attribute">
+<dt id="xadmin.views.DetailAdminView.obj">
+<tt class="descname">obj</tt><a class="headerlink" href="#xadmin.views.DetailAdminView.obj" title="Permalink to this definition">¶</a></dt>
+<dd><p>the model object that will be deleted</p>
+</dd></dl>
+
+</div></blockquote>
+<dl class="method">
+<dt id="xadmin.views.DetailAdminView.get">
+<tt class="descname">get</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.DetailAdminView.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.DetailAdminView.get_breadcrumb">
+<tt class="descname">get_breadcrumb</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.DetailAdminView.get_breadcrumb" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.DetailAdminView.get_context">
+<tt class="descname">get_context</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.DetailAdminView.get_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p><strong>Context params</strong>:</p>
+<blockquote>
+<div><p>&#8216;form&#8217;: the form object used to display model object data.</p>
+<p>&#8216;object&#8217;: the Model object that will be dispalyed</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.DetailAdminView.get_field_result">
+<tt class="descname">get_field_result</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.DetailAdminView.get_field_result" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return the instance of ResultField class which contains the field content.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.DetailAdminView.get_form_helper">
+<tt class="descname">get_form_helper</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.DetailAdminView.get_form_helper" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>obtain the instance of FormHelper required by the Crispy Form. The details can be found with Crisp Form document</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.DetailAdminView.get_form_layout">
+<tt class="descname">get_form_layout</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.DetailAdminView.get_form_layout" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return the Form Layout object, if the attribute &#8216;detail_layout&#8217; is set then return it, or return the automatically generated Form Layout object. More Form Layout information can see Crispy Form document. Setting customized Form Layout object is more flexible way to render every element of form.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.DetailAdminView.get_media">
+<tt class="descname">get_media</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.DetailAdminView.get_media" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return the Media object of the current view instance, which contains information of &#8216;form.css&#8217; file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.DetailAdminView.get_model_form">
+<tt class="descname">get_model_form</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.DetailAdminView.get_model_form" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return ModelForm object which is used to display the form.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.DetailAdminView.get_response">
+<tt class="descname">get_response</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.DetailAdminView.get_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter_hook</p>
+<p>return a HttpResponse object, plugins can override this method to return specified HttpResponse object.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.views.DetailAdminView.init_request">
+<tt class="descname">init_request</tt><big>(</big><em>object_id</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#xadmin.views.DetailAdminView.init_request" title="Permalink to this definition">¶</a></dt>
+<dd><p>do initialization. Display the model object data according to passed parameter &#8216;object_id&#8217;. The current user&#8217;s permission will be checked, if no view right the view page will be not shown.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="xadmin.views.filter_hook">
+<tt class="descclassname">xadmin.views.</tt><tt class="descname">filter_hook</tt><big>(</big><em>func</em><big>)</big><a class="headerlink" href="#xadmin.views.filter_hook" title="Permalink to this definition">¶</a></dt>
+<dd><p>the methods of AdminView  with this decorator can be extended by Plugin classes, and will be executed as the following procedure:</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p class="first">get the plugins property from the instance then retrieve the plugin with the same method name</p>
+</li>
+<li><p class="first">order by the &#8216;priority&#8217; of the plugins</p>
+</li>
+<li><p class="first">execute the plugin methods in order and follow the rules:</p>
+<blockquote>
+<div><ul>
+<li><p class="first">if no parameters are given to the plugin method, the return of AdminView method is not null and throws exception.</p>
+</li>
+<li><p class="first">If the first parameter passed to the plugin method is &#8216;__&#8217; then this parameter is the AdminView method. The plugin method will be executed through calling &#8216;__()&#8217; and before the  AdminView method.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">get_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">__</span><span class="p">):</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;key&#39;</span><span class="p">:</span> <span class="s">&#39;value&#39;</span><span class="p">}</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">__</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">c</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">If the first parameter of the plugin method is not &#8216;__&#8217;, the AdminView method will be executed and it&#8217;s return value will be passed as the first parameter.</p>
+</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">In final the plugins are executed sequentially and the results are returned in order.</p>
+</li>
+</ol>
+</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="xadmin.views.csrf_protect_m">
+<tt class="descclassname">xadmin.views.</tt><tt class="descname">csrf_protect_m</tt><big>(</big><em>func</em><big>)</big><a class="headerlink" href="#xadmin.views.csrf_protect_m" title="Permalink to this definition">¶</a></dt>
+<dd><p>This decorator adds CSRF protection in exactly the same way as
+CsrfViewMiddleware, but it can be used on a per view basis.  Using both, or
+using the decorator multiple times, is harmless and efficient.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="site_api.html"
+                        title="previous chapter">Admin Site</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="faq.html"
+                        title="next chapter">FAQ</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/views_api.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="faq.html" title="FAQ"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="site_api.html" title="Admin Site"
+             >previous</a> |</li>
+        <li><a href="index.html">Django Xadmin 2.1.5 beta documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, sshwsfc.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

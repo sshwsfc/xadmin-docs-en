@@ -1,0 +1,403 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Admin Site &mdash; Django Xadmin 2.1.5 beta documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.1.5 beta',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Django Xadmin 2.1.5 beta documentation" href="index.html" />
+    <link rel="next" title="Views" href="views_api.html" />
+    <link rel="prev" title="Xadmin 插件制作" href="make_plugin.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="views_api.html" title="Views"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="make_plugin.html" title="Xadmin 插件制作"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Django Xadmin 2.1.5 beta documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-xadmin.sites">
+<span id="adminsite"></span><h1>Admin Site<a class="headerlink" href="#module-xadmin.sites" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="xadmin.sites.AdminSite">
+<em class="property">class </em><tt class="descclassname">xadmin.sites.</tt><tt class="descname">AdminSite</tt><big>(</big><em>name='xadmin'</em><big>)</big><a class="reference internal" href="_modules/xadmin/sites.html#AdminSite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.sites.AdminSite" title="Permalink to this definition">¶</a></dt>
+<dd><p>The core of xadmin, managing all the register contents of xadmin.</p>
+<p>In general there is only one instance of AdminSite within a managed site,  and this AdminSite instance is responsible for the following tasks:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p class="first">register and manage all information required by xadmin</p>
+</li>
+<li><p class="first">create <tt class="docutils literal"><span class="pre">admin</span> <span class="pre">view</span> <span class="pre">class</span></tt></p>
+</li>
+<li><p class="first">registered urls in django</p>
+</li>
+</ul>
+</div></blockquote>
+<p>xadmin required information includes:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p class="first">the models need to be managed by xadmin and all information about the admin settings in the models</p>
+</li>
+<li><p class="first">registered &#8216;admin view class&#8217;</p>
+</li>
+<li><p class="first">registered &#8216;model admin view class&#8217;</p>
+</li>
+<li><p class="first">all registered plugins</p>
+</li>
+</ul>
+</div></blockquote>
+<dl class="method">
+<dt id="xadmin.sites.AdminSite.admin_view">
+<tt class="descname">admin_view</tt><big>(</big><em>view</em>, <em>cacheable=False</em><big>)</big><a class="reference internal" href="_modules/xadmin/sites.html#AdminSite.admin_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.sites.AdminSite.admin_view" title="Permalink to this definition">¶</a></dt>
+<dd><p>provide Decorator to all Views in the current AdminSite. Use has_permission method of AdminSite to check whether the current user has privilege to access the AdminSite, and redirect to login page if not.</p>
+<p>it will be called inside the get_urls method of AdminSite</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>cacheable</strong> &#8211; 默认情况下，所有的 AdminView 会通过 <tt class="docutils literal"><span class="pre">never_cache</span></tt> 标记成不做缓存，如果确实需要缓存，可以设置 cacheable=True</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.sites.AdminSite.check_dependencies">
+<tt class="descname">check_dependencies</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/xadmin/sites.html#AdminSite.check_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.sites.AdminSite.check_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>check the packages on that the xadmin depends whether are installed correctly.</p>
+<p>In default, the <em>ContentType</em> module will be checked to see whether it is installed correctly</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.sites.AdminSite.copy_registry">
+<tt class="descname">copy_registry</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/xadmin/sites.html#AdminSite.copy_registry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.sites.AdminSite.copy_registry" title="Permalink to this definition">¶</a></dt>
+<dd><p>copy the information of the current AdminSite instance</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.sites.AdminSite.create_admin_view">
+<tt class="descname">create_admin_view</tt><big>(</big><em>admin_view_class</em><big>)</big><a class="reference internal" href="_modules/xadmin/sites.html#AdminSite.create_admin_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.sites.AdminSite.create_admin_view" title="Permalink to this definition">¶</a></dt>
+<dd><p>use the get_view_class method of AdminSite to create AdminView class and return view method which can be called by the get_urls method</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>admin_view_class</strong> &#8211; AdminView 类</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.sites.AdminSite.create_model_admin_view">
+<tt class="descname">create_model_admin_view</tt><big>(</big><em>admin_view_class</em>, <em>model</em>, <em>option_class</em><big>)</big><a class="reference internal" href="_modules/xadmin/sites.html#AdminSite.create_model_admin_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.sites.AdminSite.create_model_admin_view" title="Permalink to this definition">¶</a></dt>
+<dd><p>use get_view_class method of AdminSite to create ModelAdminView and return view method, which can be call by get_urls method</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>admin_view_class</strong> &#8211; AdminView 类，该类应该为 <tt class="xref py py-class docutils literal"><span class="pre">ModelAdminView</span></tt> 的子类</li>
+<li><strong>model</strong> &#8211; Model 类，目前该参数暂无作用</li>
+<li><strong>option_class</strong> &#8211; Model 的 OptionClass，保存对该 Model 的相关定制</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.sites.AdminSite.get_plugins">
+<tt class="descname">get_plugins</tt><big>(</big><em>admin_view_class</em>, <em>*option_classes</em><big>)</big><a class="reference internal" href="_modules/xadmin/sites.html#AdminSite.get_plugins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.sites.AdminSite.get_plugins" title="Permalink to this definition">¶</a></dt>
+<dd><p>the core method of xadmin is used to get the plugins from AdminViewClass</p>
+<p>to obtain the plugin instances, first find the corresponding plugin classes registered to this AdminView class and all other integrated classes, then apply the OptionClass of the second parameter.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.sites.AdminSite.get_view_class">
+<tt class="descname">get_view_class</tt><big>(</big><em>view_class</em>, <em>option_class=None</em>, <em>**opts</em><big>)</big><a class="reference internal" href="_modules/xadmin/sites.html#AdminSite.get_view_class"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.sites.AdminSite.get_view_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>the most core method of xadmin is used to create specific AdminViewClass that belongs to xadmin</p>
+<p>there are two steps of creating AdminView class instance and dynamically generating the mix class</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p class="first">use the registered OptionClass (see method register), the option_class parameter and the view_class to dynamically create the class instance</p>
+</li>
+<li><p class="first">retrieve the corresponding plugins according to the view_class and its super classes, and create it as the &#8216;plugins&#8217; properties of the AdminViewClass</p>
+</li>
+</ol>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.sites.AdminSite.has_permission">
+<tt class="descname">has_permission</tt><big>(</big><em>request</em><big>)</big><a class="reference internal" href="_modules/xadmin/sites.html#AdminSite.has_permission"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.sites.AdminSite.has_permission" title="Permalink to this definition">¶</a></dt>
+<dd><p>if return True the request.user at least can access the current xadmin website, otherwise not.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.sites.AdminSite.register">
+<tt class="descname">register</tt><big>(</big><em>model_or_iterable</em>, <em>admin_class=&lt;type 'object'&gt;</em>, <em>**options</em><big>)</big><a class="reference internal" href="_modules/xadmin/sites.html#AdminSite.register"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.sites.AdminSite.register" title="Permalink to this definition">¶</a></dt>
+<dd><p>register the Model that need to be managed, or register the OptionClass of the AdminView</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>model_or_iterable</strong> &#8211; 传入 model 或是指定的 ModelOptionClass</li>
+<li><strong>admin_class</strong> &#8211; 当 model_or_iterable 为 Model 时，该参数为 ModelAdmin；model_or_iterable 为 AdminView 时 ，该参数为 OptionClass</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>please see xadmin.views.base.BaseAdminPlugin about the details of Admin Plugin. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">models</span> <span class="kn">import</span> <span class="n">SomeModel</span>
+
+<span class="k">class</span> <span class="nc">SomeModelAdmin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+<span class="n">site</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">SomeModel</span><span class="p">,</span> <span class="n">SomeModelAdmin</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.sites.AdminSite.register_modelview">
+<tt class="descname">register_modelview</tt><big>(</big><em>path</em>, <em>admin_view_class</em>, <em>name</em><big>)</big><a class="reference internal" href="_modules/xadmin/sites.html#AdminSite.register_modelview"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.sites.AdminSite.register_modelview" title="Permalink to this definition">¶</a></dt>
+<dd><p>register the classes Model Base Admin View to the AdminSite</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>path</strong> &#8211; view对应的url路径</li>
+<li><strong>admin_view_class</strong> &#8211; 注册的 Model Base Admin View 类</li>
+<li><strong>name</strong> &#8211; view对应的url name, 要包含两个%%s, 分别会替换为 app_label和module_name</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>the registered Model Base Admin View in the AdminSite can be used to create AdminView for the registered Model which will contain the relevant Model information. Please check xadmin.views.base.ModelAdminView to see the details. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">xadmin.views</span> <span class="kn">import</span> <span class="n">ModelAdminView</span>
+
+<span class="k">class</span> <span class="nc">TestModelAdminView</span><span class="p">(</span><span class="n">ModelAdminView</span><span class="p">):</span>
+    
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">obj_id</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<span class="n">site</span><span class="o">.</span><span class="n">register_modelview</span><span class="p">(</span><span class="s">r&#39;^(.+)/test/$&#39;</span><span class="p">,</span> <span class="n">TestModelAdminView</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">_</span><span class="si">%s</span><span class="s">_test&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>after the registration, the view can be accessed by path &#8216;/%(app_label)s/%(module_name)s/123/test&#8217;</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.sites.AdminSite.register_plugin">
+<tt class="descname">register_plugin</tt><big>(</big><em>plugin_class</em>, <em>admin_view_class</em><big>)</big><a class="reference internal" href="_modules/xadmin/sites.html#AdminSite.register_plugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.sites.AdminSite.register_plugin" title="Permalink to this definition">¶</a></dt>
+<dd><p>register the Plugin class to the instance of AdminSite, the instance of corresponding plugin class which is bound to the current view class will be effective when any instance of the AdminView classes runs</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>plugin_class</strong> &#8211; view对应的url路径</li>
+<li><strong>admin_view_class</strong> &#8211; 该 plugin 绑定的 Admin View 类</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>please see xadmin.views.base.BaseAdminPlugin about the details of Admin Plugin. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">xadmin.views</span> <span class="kn">import</span> <span class="n">BaseAdminPlugin</span>
+
+<span class="k">class</span> <span class="nc">TestAdminPlugin</span><span class="p">(</span><span class="n">BaseAdminPlugin</span><span class="p">):</span>
+    
+    <span class="k">def</span> <span class="nf">get_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+        <span class="n">context</span><span class="p">[</span><span class="s">&#39;test&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="n">context</span>
+
+<span class="n">site</span><span class="o">.</span><span class="n">register_plugin</span><span class="p">(</span><span class="n">TestAdminPlugin</span><span class="p">,</span> <span class="n">SomeAdminView</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>after the registration, the plugin will be called when the get_context method of SomeAdminView is invoked</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.sites.AdminSite.register_view">
+<tt class="descname">register_view</tt><big>(</big><em>path</em>, <em>admin_view_class</em>, <em>name</em><big>)</big><a class="reference internal" href="_modules/xadmin/sites.html#AdminSite.register_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.sites.AdminSite.register_view" title="Permalink to this definition">¶</a></dt>
+<dd><p>an independent admin page e.g. login page, introduction page, help page, ect can be created by registering the AdminView class to the AdminSite.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>path</strong> &#8211; view对应的url路径</li>
+<li><strong>admin_view_class</strong> &#8211; 注册的 Admin View 类</li>
+<li><strong>name</strong> &#8211; view对应的url name</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>See xadmin.views.base.BaseAdminView to see the details about AdminView. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">xadmin.views</span> <span class="kn">import</span> <span class="n">BaseAdminView</span>
+
+<span class="k">class</span> <span class="nc">TestAdminView</span><span class="p">(</span><span class="n">BaseAdminView</span><span class="p">):</span>
+    
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<span class="n">site</span><span class="o">.</span><span class="n">register_view</span><span class="p">(</span><span class="s">r&#39;test_view/$&#39;</span><span class="p">,</span> <span class="n">TestModelAdminView</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;for_test&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>after the registration, the users can access the view through the path of &#8216;/test_view/&#8217;</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.sites.AdminSite.restore_registry">
+<tt class="descname">restore_registry</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="_modules/xadmin/sites.html#AdminSite.restore_registry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.sites.AdminSite.restore_registry" title="Permalink to this definition">¶</a></dt>
+<dd><p>recover the information of the current AdminSite instance</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="xadmin.sites.AdminSite.unregister">
+<tt class="descname">unregister</tt><big>(</big><em>model_or_iterable</em><big>)</big><a class="reference internal" href="_modules/xadmin/sites.html#AdminSite.unregister"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.sites.AdminSite.unregister" title="Permalink to this definition">¶</a></dt>
+<dd><p>unregister the Model or OptionClass</p>
+<p>if the Model or OptionClass have never been registered, it throws exception of &#8216;xadmin.sites.NotRegistered&#8217;</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="xadmin.sites.AdminSite.urls">
+<tt class="descname">urls</tt><a class="reference internal" href="_modules/xadmin/sites.html#AdminSite.urls"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.sites.AdminSite.urls" title="Permalink to this definition">¶</a></dt>
+<dd><p>return the urls attribute of the xdmin site, which is used to set django urls. This is property getter method and can be found in the &#8216;urls.py&#8217; file of Django framework, the example shown as the following:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls</span> <span class="kn">import</span> <span class="n">patterns</span><span class="p">,</span> <span class="n">include</span><span class="p">,</span> <span class="n">url</span>
+
+<span class="kn">import</span> <span class="nn">xadmin</span>
+<span class="n">xadmin</span><span class="o">.</span><span class="n">autodiscover</span><span class="p">()</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="n">url</span><span class="p">(</span><span class="s">r&#39;&#39;</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="n">xadmin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">urls</span><span class="p">)),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="xadmin.sites.AlreadyRegistered">
+<em class="property">exception </em><tt class="descclassname">xadmin.sites.</tt><tt class="descname">AlreadyRegistered</tt><a class="reference internal" href="_modules/xadmin/sites.html#AlreadyRegistered"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.sites.AlreadyRegistered" title="Permalink to this definition">¶</a></dt>
+<dd><p>if a model has been registered to AdminSite, an exception will be thrown when register it again.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="xadmin.sites.MergeAdminMetaclass">
+<em class="property">class </em><tt class="descclassname">xadmin.sites.</tt><tt class="descname">MergeAdminMetaclass</tt><a class="reference internal" href="_modules/xadmin/sites.html#MergeAdminMetaclass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.sites.MergeAdminMetaclass" title="Permalink to this definition">¶</a></dt>
+<dd><p>it is used to generate the original class of admin view class</p>
+<p>for now the original class has no special usage, but a new public properties will be added to it in the next version</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="xadmin.sites.NotRegistered">
+<em class="property">exception </em><tt class="descclassname">xadmin.sites.</tt><tt class="descname">NotRegistered</tt><a class="reference internal" href="_modules/xadmin/sites.html#NotRegistered"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.sites.NotRegistered" title="Permalink to this definition">¶</a></dt>
+<dd><p>if a model has not been registered to the AdminSite, an exception will be thrown when try to unregister this model.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="make_plugin.html"
+                        title="previous chapter">Xadmin 插件制作</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="views_api.html"
+                        title="next chapter">Views</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/site_api.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="views_api.html" title="Views"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="make_plugin.html" title="Xadmin 插件制作"
+             >previous</a> |</li>
+        <li><a href="index.html">Django Xadmin 2.1.5 beta documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, sshwsfc.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

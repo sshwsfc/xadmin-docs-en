@@ -1,0 +1,471 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Xadmin plugins &mdash; Django Xadmin 2.1.5 beta documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.1.5 beta',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Django Xadmin 2.1.5 beta documentation" href="index.html" />
+    <link rel="next" title="Xadmin 插件制作" href="make_plugin.html" />
+    <link rel="prev" title="Features of xadmin" href="feature.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="make_plugin.html" title="Xadmin 插件制作"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="feature.html" title="Features of xadmin"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Django Xadmin 2.1.5 beta documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="xadmin">
+<span id="plugins"></span><h1>Xadmin plugins<a class="headerlink" href="#xadmin" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>plugins overview<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-xadmin.plugins">
+<span id="id2"></span><h2>built-in plugins<a class="headerlink" href="#module-xadmin.plugins" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-xadmin.plugins.actions"></span><div class="section" id="action">
+<h3>Action<a class="headerlink" href="#action" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id3">
+<h4>functions<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
+<p>Action plugin provides data selection function on the data list page. The selected data can be processed specially after Action. The batch deletion function is provided as default Action.</p>
+</div>
+<div class="section" id="id4">
+<h4>screenshot<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h4>
+<img alt="_images/action.png" src="_images/action.png" />
+</div>
+<div class="section" id="id5">
+<h4>use<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h4>
+<p>To enable the Action, the developer can set the attribute &#8216;actions&#8217; of Model OptionClass which is a list type. In default, the xadmin has enabled  DeleteSelectedAction which gives you an option to delete selected items from the list view. You can also implement your customized Action class, and please see the following example.</p>
+<blockquote>
+<div><ul>
+<li><p class="first">There needs an Action class first, which subclasses BaseActionView. BaseActionView is a subclass of <a class="reference internal" href="views_api.html#xadmin.views.ModelAdminView" title="xadmin.views.ModelAdminView"><tt class="xref py py-class docutils literal"><span class="pre">ModelAdminView</span></tt></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">xadmin.plugins.actions</span> <span class="kn">import</span> <span class="n">BaseActionView</span>
+
+<span class="k">class</span> <span class="nc">MyAction</span><span class="p">(</span><span class="n">BaseActionView</span><span class="p">):</span>
+
+    <span class="c"># 这里需要填写三个属性</span>
+    <span class="n">action_name</span> <span class="o">=</span> <span class="s">&quot;my_action&quot;</span>    <span class="c">#: 相当于这个 Action 的唯一标示, 尽量用比较针对性的名字</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="n">_</span><span class="p">(</span><span class="s">u&#39;Test selected </span><span class="si">%(verbose_name_plural)s</span><span class="s">&#39;</span><span class="p">)</span> <span class="c">#: 描述, 出现在 Action 菜单中, 可以使用 ``%(verbose_name_plural)s`` 代替 Model 的名字.</span>
+
+    <span class="n">model_perm</span> <span class="o">=</span> <span class="s">&#39;change&#39;</span>    <span class="c">#: 该 Action 所需权限</span>
+
+    <span class="c"># 而后实现 do_action 方法</span>
+    <span class="k">def</span> <span class="nf">do_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">queryset</span><span class="p">):</span>
+        <span class="c"># queryset 是包含了已经选择的数据的 queryset</span>
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">queryset</span><span class="p">:</span>
+            <span class="c"># obj 的操作</span>
+            <span class="o">...</span>
+        <span class="c"># 返回 HttpResponse</span>
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">then apply this Action:: on OptionClass in Model</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MyModelAdmin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="n">actions</span> <span class="o">=</span> <span class="p">[</span><span class="n">MyAction</span><span class="p">,</span> <span class="p">]</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">then you have completed your Action</p>
+</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="api">
+<h4>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h4>
+<dl class="class">
+<dt id="xadmin.plugins.actions.ActionPlugin">
+<em class="property">class </em><tt class="descclassname">xadmin.plugins.actions.</tt><tt class="descname">ActionPlugin</tt><big>(</big><em>admin_view</em><big>)</big><a class="reference internal" href="_modules/xadmin/plugins/actions.html#ActionPlugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.plugins.actions.ActionPlugin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+<span class="target" id="module-xadmin.plugins.filters"></span><div class="section" id="id6">
+<h3>data filters<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id7">
+<h4>functions<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h4>
+<p>The list view provides data filtering function and you can search the data by fuzzy searching, numerical range, date range, etc.</p>
+</div>
+<div class="section" id="id8">
+<h4>screenshot<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h4>
+<img alt="_images/filter.png" src="_images/filter.png" />
+</div>
+<div class="section" id="id9">
+<h4>use<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h4>
+<p>In Model OptionClass, set up the following attributes:</p>
+<blockquote>
+<div><ul>
+<li><p class="first"><tt class="docutils literal"><span class="pre">list_filter</span></tt> property</p>
+<blockquote>
+<div><p>This property can specify the name of column can be filtered, and then the system will generate a searcher automatically</p>
+</div></blockquote>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">search_fields</span></tt> property</p>
+<blockquote>
+<div><p>属性指定可以通过搜索框搜索的数据列的名字, 搜索框搜索使用的是模糊查找的方式, 一般用来搜素名字等字符串字段</p>
+</div></blockquote>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">free_query_filter</span></tt> property</p>
+<blockquote>
+<div><p><tt class="docutils literal"><span class="pre">True</span></tt> by default, specifying whether free search is allowed or not. If free search is on, users can perform customized search by passing the argument url. For exampe:</p>
+<div class="highlight-python"><div class="highlight"><pre>http://xxx.com/xadmin/auth/user/?name__contains=tony
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+<p>Samples that use filters:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">UserAdmin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">list_filter</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;is_staff&#39;</span><span class="p">,</span> <span class="s">&#39;is_superuser&#39;</span><span class="p">,</span> <span class="s">&#39;is_active&#39;</span><span class="p">)</span>
+    <span class="n">search_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;username&#39;</span><span class="p">,</span> <span class="s">&#39;first_name&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">,</span> <span class="s">&#39;email&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id10">
+<h4>version<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h4>
+<p>temporarily unaccessible</p>
+</div>
+<div class="section" id="id11">
+<h4>create filters<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h4>
+<p>You can create your own filters to peform some specific filtering. The filters need to subclass :class: <cite>xadmin.filters.BaseFilter</cite>. Use :attr: <cite>xadmin.filters.manager</cite> to register the filters.</p>
+</div>
+</div>
+<span class="target" id="module-xadmin.plugins.chart"></span><div class="section" id="id12">
+<h3>chart plugin<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id13">
+<h4>functions<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h4>
+<p>The data chart can be generated from the data listed in the list view page. You can specify a number of data columns to generate more charts.</p>
+</div>
+<div class="section" id="id14">
+<h4>screenshot<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h4>
+<img alt="_images/chart.png" src="_images/chart.png" />
+</div>
+<div class="section" id="id15">
+<h4>use<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h4>
+<p>Set the <tt class="docutils literal"><span class="pre">data_charts</span></tt> property of Model OptionClass a dict. The key is the name of the chart and the value is the specific setting properties. Usage examples:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">RecordAdmin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">data_charts</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">&quot;user_count&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;title&#39;</span><span class="p">:</span> <span class="s">u&quot;User Report&quot;</span><span class="p">,</span> <span class="s">&quot;x-field&quot;</span><span class="p">:</span> <span class="s">&quot;date&quot;</span><span class="p">,</span> <span class="s">&quot;y-field&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s">&quot;user_count&quot;</span><span class="p">,</span> <span class="s">&quot;view_count&quot;</span><span class="p">),</span> <span class="s">&quot;order&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;date&#39;</span><span class="p">,)},</span>
+        <span class="s">&quot;avg_count&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;title&#39;</span><span class="p">:</span> <span class="s">u&quot;Avg Report&quot;</span><span class="p">,</span> <span class="s">&quot;x-field&quot;</span><span class="p">:</span> <span class="s">&quot;date&quot;</span><span class="p">,</span> <span class="s">&quot;y-field&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;avg_count&#39;</span><span class="p">,),</span> <span class="s">&quot;order&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;date&#39;</span><span class="p">,)}</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+<p>The main properties of the chart are:</p>
+<blockquote>
+<div><p><tt class="docutils literal"><span class="pre">title</span></tt>: display name of the chart</p>
+<p>The &#8216;x-field&#8217; property represents the data for x axis in the chart, normally it is date or time.</p>
+<p>The &#8216;y-field&#8217; is the y-axis of the data charts, which is a list containing data fields. If the &#8216;y-field&#8217; list contains more than one field, all these data will be displayed in one chart.</p>
+<p><tt class="docutils literal"><span class="pre">order</span></tt>: sorting information, if it is not provided, the order of the data list will be used</p>
+</div></blockquote>
+</div>
+<div class="section" id="id16">
+<h4>version<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h4>
+<p>temporarily unaccessible</p>
+</div>
+<div class="section" id="id17">
+<h4>API<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h4>
+<dl class="class">
+<dt id="xadmin.plugins.chart.ChartsPlugin">
+<em class="property">class </em><tt class="descclassname">xadmin.plugins.chart.</tt><tt class="descname">ChartsPlugin</tt><big>(</big><em>admin_view</em><big>)</big><a class="reference internal" href="_modules/xadmin/plugins/chart.html#ChartsPlugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.plugins.chart.ChartsPlugin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="xadmin.plugins.chart.ChartsView">
+<em class="property">class </em><tt class="descclassname">xadmin.plugins.chart.</tt><tt class="descname">ChartsView</tt><big>(</big><em>request</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/xadmin/plugins/chart.html#ChartsView"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#xadmin.plugins.chart.ChartsView" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+<span class="target" id="module-xadmin.plugins.bookmark"></span><div class="section" id="id18">
+<h3>Bookmarks<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id19">
+<h4>functions<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h4>
+<p>It records the results of special processing such as data filtering and ordering. The added bookmarks also can be added as small widget from the dashboard of the Index page.</p>
+</div>
+<div class="section" id="id20">
+<h4>screenshot<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h4>
+<img alt="_images/bookmark.png" src="_images/bookmark.png" />
+</div>
+<div class="section" id="id21">
+<h4>use<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h4>
+<p>set the following properties in Model OptionClass:</p>
+<blockquote>
+<div><ul>
+<li><p class="first"><tt class="docutils literal"><span class="pre">show_bookmarks</span></tt> property:</p>
+<blockquote>
+<div><p>set the bookmarks function on or not, <tt class="docutils literal"><span class="pre">True</span></tt> by default</p>
+</div></blockquote>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">list_bookmarks</span></tt> property</p>
+<blockquote>
+<div><p>Set default bookmarks. Users can add their own bookmarks on the list page. You can also provide some bookmarks in advance. Usage examples:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">UserAdmin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">list_bookmarks</span> <span class="o">=</span> <span class="p">[{</span>
+        <span class="s">&#39;title&#39;</span><span class="p">:</span> <span class="s">&quot;Female&quot;</span><span class="p">,</span>         <span class="c"># 书签的名称, 显示在书签菜单中</span>
+        <span class="s">&#39;query&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;gender&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">},</span> <span class="c"># 过滤参数, 是标准的 queryset 过滤</span>
+        <span class="s">&#39;order&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;-age&#39;</span><span class="p">),</span>         <span class="c"># 排序参数</span>
+        <span class="s">&#39;cols&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;first_name&#39;</span><span class="p">,</span> <span class="s">&#39;age&#39;</span><span class="p">,</span> <span class="s">&#39;phones&#39;</span><span class="p">),</span>  <span class="c"># 显示的列</span>
+        <span class="s">&#39;search&#39;</span><span class="p">:</span> <span class="s">&#39;Tom&#39;</span>    <span class="c"># 搜索参数, 指定搜索的内容</span>
+        <span class="p">},</span> <span class="p">{</span><span class="o">...</span><span class="p">}</span>
+    <span class="p">]</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="id22">
+<h4>version<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h4>
+<p>temporarily unaccessible</p>
+</div>
+</div>
+<span class="target" id="module-xadmin.plugins.export"></span><div class="section" id="id23">
+<h3>Data exporting<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id24">
+<h4>functions<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h4>
+<p>This plugin provides data exporting function on the data list page. Data can be exported in format Excel, CSV, XML or json.</p>
+</div>
+<div class="section" id="id25">
+<h4>screenshot<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h4>
+<img alt="_images/export.png" src="_images/export.png" />
+</div>
+<div class="section" id="id26">
+<h4>use<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h4>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">To export the data in Excel format, install <cite>xlwt &lt;http://pypi.python.org/pypi/xlwt&gt;</cite> first.</p>
+</div>
+<p>In default, the xadmin can export the data file as Excel, CSV, XML and JSON format. The supported export file format can be set by the property &#8216;list_export&#8217; of OptionClass, which has values xls, cvs, xml and json. Or you can set None to the list_export to disable data export function.</p>
+<div class="highlight-python"><div class="highlight"><pre>class MyModelAdmin(object):
+
+    list_export = (&#39;xls&#39;, xml&#39;, &#39;json&#39;)
+</pre></div>
+</div>
+</div>
+</div>
+<span class="target" id="module-xadmin.plugins.refresh"></span><div class="section" id="id27">
+<h3>Refresh the list at given intervals.<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id28">
+<h4>functions<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h4>
+<p>This plugin provides refresh function, which is very useful to check a real-time data from a list view page.</p>
+</div>
+<div class="section" id="id29">
+<h4>screenshot<a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h4>
+<img alt="_images/refresh.png" src="_images/refresh.png" />
+</div>
+<div class="section" id="id30">
+<h4>use<a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h4>
+<p>To enable the refresh function plugin, just simply set up the &#8216;refresh_times&#8217; property of OptionClass. The &#8216;refresh_times&#8217; is a list containing the interval. In default, this plugin is inactive. Please see the following example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MyModelAdmin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    
+    <span class="c"># 这会显示一个下拉列表, 用户可以选择3秒或5秒刷新一次页面.</span>
+    <span class="n">refresh_times</span> <span class="o">=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<span class="target" id="module-xadmin.plugins.sortable"></span><span class="target" id="module-xadmin.plugins.details"></span><div class="section" id="id31">
+<h3>Display data details<a class="headerlink" href="#id31" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id32">
+<h4>functions<a class="headerlink" href="#id32" title="Permalink to this headline">¶</a></h4>
+<p>This plugin uses Ajax to show the details of the relevant fields in the list view page.</p>
+</div>
+<div class="section" id="id33">
+<h4>screenshot<a class="headerlink" href="#id33" title="Permalink to this headline">¶</a></h4>
+<img alt="_images/details.png" src="_images/details.png" />
+</div>
+<div class="section" id="id34">
+<h4>use<a class="headerlink" href="#id34" title="Permalink to this headline">¶</a></h4>
+<p>To use this plugin, you can set up the properties &#8216;show_detail_fields&#8217; and &#8216;show_all_rel_details&#8217; in OptionClass. The property &#8216;show_detail_fields&#8217; specifies the fields shown in details, and all related fields will shown in details when &#8216;show_all_rel_details&#8217; is set as True (default setting). Please check the following example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MyModelAdmin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    
+    <span class="n">show_detail_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;group&#39;</span><span class="p">,</span> <span class="s">&#39;father&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<span class="target" id="module-xadmin.plugins.editable"></span><div class="section" id="id35">
+<h3>instant data edit<a class="headerlink" href="#id35" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id36">
+<h4>functions<a class="headerlink" href="#id36" title="Permalink to this headline">¶</a></h4>
+<p>Ajax is used by this plugin to modify the value of some field instantly. There is no need for submitting or page refreshing to complete the data modification. It is quiet useful when it comes to some frequently modified field, (for example, state).</p>
+</div>
+<div class="section" id="id37">
+<h4>screenshot<a class="headerlink" href="#id37" title="Permalink to this headline">¶</a></h4>
+<img alt="_images/editable.png" src="_images/editable.png" />
+</div>
+<div class="section" id="id38">
+<h4>use<a class="headerlink" href="#id38" title="Permalink to this headline">¶</a></h4>
+<p>This plugin can set by the &#8216;list_editable&#8217; property of OptionClass. The &#8216;list_editable&#8217; is a tuple used to specify the editable fields in the list view page.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MyModelAdmin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    
+    <span class="n">list_editable</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;price&#39;</span><span class="p">,</span> <span class="s">&#39;status&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Xadmin plugins</a><ul>
+<li><a class="reference internal" href="#id1">plugins overview</a></li>
+<li><a class="reference internal" href="#module-xadmin.plugins">built-in plugins</a><ul>
+<li><a class="reference internal" href="#action">Action</a><ul>
+<li><a class="reference internal" href="#id3">functions</a></li>
+<li><a class="reference internal" href="#id4">screenshot</a></li>
+<li><a class="reference internal" href="#id5">use</a></li>
+<li><a class="reference internal" href="#api">API</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id6">data filters</a><ul>
+<li><a class="reference internal" href="#id7">functions</a></li>
+<li><a class="reference internal" href="#id8">screenshot</a></li>
+<li><a class="reference internal" href="#id9">use</a></li>
+<li><a class="reference internal" href="#id10">version</a></li>
+<li><a class="reference internal" href="#id11">create filters</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id12">chart plugin</a><ul>
+<li><a class="reference internal" href="#id13">functions</a></li>
+<li><a class="reference internal" href="#id14">screenshot</a></li>
+<li><a class="reference internal" href="#id15">use</a></li>
+<li><a class="reference internal" href="#id16">version</a></li>
+<li><a class="reference internal" href="#id17">API</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id18">Bookmarks</a><ul>
+<li><a class="reference internal" href="#id19">functions</a></li>
+<li><a class="reference internal" href="#id20">screenshot</a></li>
+<li><a class="reference internal" href="#id21">use</a></li>
+<li><a class="reference internal" href="#id22">version</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id23">Data exporting</a><ul>
+<li><a class="reference internal" href="#id24">functions</a></li>
+<li><a class="reference internal" href="#id25">screenshot</a></li>
+<li><a class="reference internal" href="#id26">use</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id27">Refresh the list at given intervals.</a><ul>
+<li><a class="reference internal" href="#id28">functions</a></li>
+<li><a class="reference internal" href="#id29">screenshot</a></li>
+<li><a class="reference internal" href="#id30">use</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id31">Display data details</a><ul>
+<li><a class="reference internal" href="#id32">functions</a></li>
+<li><a class="reference internal" href="#id33">screenshot</a></li>
+<li><a class="reference internal" href="#id34">use</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id35">instant data edit</a><ul>
+<li><a class="reference internal" href="#id36">functions</a></li>
+<li><a class="reference internal" href="#id37">screenshot</a></li>
+<li><a class="reference internal" href="#id38">use</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="feature.html"
+                        title="previous chapter">Features of xadmin</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="make_plugin.html"
+                        title="next chapter">Xadmin 插件制作</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/plugins.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="make_plugin.html" title="Xadmin 插件制作"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="feature.html" title="Features of xadmin"
+             >previous</a> |</li>
+        <li><a href="index.html">Django Xadmin 2.1.5 beta documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, sshwsfc.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
